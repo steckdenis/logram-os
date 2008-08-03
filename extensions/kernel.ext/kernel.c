@@ -114,14 +114,37 @@ void MakeGDT () {
 	LoadGDT ();
 }
 
+// Extraite de la libC, recherche un caractère dans une chaîne
+char *strchr (const char *s, int c)
+{
+    if (s != 0)
+    {
+        while (*s && s[0] != c)
+        {
+            s++;
+        }
+        if (s[0] == c)
+            return (char*)s;
+        else
+            return 0;
+    }
+    else
+        return 0;
+}
+
 // Charge tous les drivers
 void LoadDrivers()
 {
 	int64	dblock;			//Bloc du fichier drivers.lst
 	int64	block;			//bloc de sys64
-	lchar	drivers [256];		//Adresse du buffer dans lequel on a lu drivers.lst
+	char	drivers [512];		//Adresse du buffer dans lequel on a lu drivers.lst
+	char	*currDriver; 		//Nom du pilote courant
+	lchar	currDriver_u [100]; 	//Nom du pilote courant en unicode
 	lchar	*drv;			//Adresse du nom du pilote courrant
+	int32	countDriver = 0;	//Nombre de drivers à charger
 	int 	i = 0;			//Itérateur
+	int	j = 0;			//Itérateur
+	char 	*eos; 			//Pointe sur le caractère de fin de chaîne
 	
 	//On ouvre drivers.lst
 	block = FSL_Open(0, L"Logram");
@@ -131,14 +154,26 @@ void LoadDrivers()
 	//On lit drivers.lst
 	FSL_Read(dblock, (void *) drivers, 1);
 
-	//On explore la liste des pilotes à charger (tant qu'on n'arrive pas à la fin (pilote "end"))
-	SplitString(drivers, L'$');
-	drv = drivers;
-	while (!CompareString(drv, L"end"))
+	//Nombre de drivers (ne peut être supérieur à 9, temporaire)
+	countDriver = (int32) (drivers [0] - '0');
+
+	currDriver = drivers;
+
+	//On charge les drivers
+	for (;i < countDriver; i++)
 	{
-		LoadDriver(block, drv, i);
-		SplitNext(drv, &drv);
-		i++;
+		currDriver = (char *) (strchr (currDriver, '\n') + 1);
+		eos = strchr (currDriver, '\n');
+		*eos = '\0';
+		while (*currDriver != '\0') { // Conversion en lchar
+			currDriver_u [j] = *currDriver;
+			currDriver++;
+			j++;
+		}
+		currDriver_u [j] = '\0';
+		*eos = '\n';
+		j = 0;
+		LoadDriver (block, currDriver_u, i);
 	}
 }
 
