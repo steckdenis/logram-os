@@ -44,7 +44,7 @@ void 	InitKernel 	();
 void 	Test 		();
 void	MakeGDT 	();
 void	LoadDrivers	();
-void	LoadDriver	(int64 block, lchar *drv, int32 nb);
+void	LoadDriver	(int64 block, lchar *drv);
 int 	SplitString	(lchar *str, lchar separator);
 int 	SplitNext	(lchar *str, lchar **out);
 
@@ -132,18 +132,24 @@ char *strchr (const char *s, int c)
         return 0;
 }
 
+void char2wchar(char *in, lchar *out)
+{
+	while (*in != '\0') { // Conversion en lchar
+		*out = (lchar) *in;
+		in++;
+		out++;
+	}
+	*out = 0;
+}
+
 // Charge tous les drivers
 void LoadDrivers()
 {
 	int64	dblock;			//Bloc du fichier drivers.lst
 	int64	block;			//bloc de sys64
-	char	drivers [512];		//Adresse du buffer dans lequel on a lu drivers.lst
+	char	*drivers;		//Adresse du buffer dans lequel on a lu drivers.lst
 	char	*currDriver; 		//Nom du pilote courant
 	lchar	currDriver_u [100]; 	//Nom du pilote courant en unicode
-	lchar	*drv;			//Adresse du nom du pilote courrant
-	int32	countDriver = 0;	//Nombre de drivers à charger
-	int 	i = 0;			//Itérateur
-	int	j = 0;			//Itérateur
 	char 	*eos; 			//Pointe sur le caractère de fin de chaîne
 	
 	//On ouvre drivers.lst
@@ -151,37 +157,32 @@ void LoadDrivers()
 	block = FSL_Open(block, L"sys64");
 	dblock = FSL_Open(block, L"drivers.lst");
 	
+	//On alloue une page
+	drivers = (char *) VirtualAlloc(0, 1, MEM_PUBLIC, 1);
+
 	//On lit drivers.lst
-	FSL_Read(dblock, (void *) drivers, 1);
+	FSL_Read(dblock, (void *) drivers, 8); //8 secteurs = 4ko
 
-	//Nombre de drivers (ne peut être supérieur à 9, temporaire)
-	countDriver = (int32) (drivers [0] - '0');
-
+	//On charge les pilotes
 	currDriver = drivers;
-
-	//On charge les drivers
-	for (;i < countDriver; i++)
+	while (1)
 	{
-		currDriver = (char *) (strchr (currDriver, '\n') + 1);
 		eos = strchr (currDriver, '\n');
 		*eos = '\0';
-		while (*currDriver != '\0') { // Conversion en lchar
-			currDriver_u [j] = *currDriver;
-			currDriver++;
-			j++;
-		}
-		currDriver_u [j] = '\0';
-		*eos = '\n';
-		j = 0;
-		LoadDriver (block, currDriver_u, i);
-	}
+		char2wchar(currDriver, currDriver_u);
+		if (CompareString(currDriver_u, L"EndOfList")) break; //Si c'était le dernier pilote, quitter
+		LoadDriver (block, currDriver_u);
+		currDriver = eos+1;	//Passer au driver suivant
+	} 
+	
+	//Magnifique, on a tout chargé :)
 }
 
 // Charge un driver
 // Paramètres : - int64 block 	: bloc du dossier du driver
 //		- lchar *drv	: nom du driver
 //		- int32 nb	: numéro de driver
-void LoadDriver (int64 block, lchar *drv, int32 nb)
+void LoadDriver (int64 block, lchar *drv)
 {
 	kprintf_unicode(drv, 0x07);
 }
