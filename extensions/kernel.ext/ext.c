@@ -45,22 +45,32 @@ void	*ExtFind(void *ext, lchar *nom)
 	header = (resext *) ext;
 	
 	exps = (exports *) header->exports;
+	if (exps < (exports *) 0x800000)
+	{
+		//La fonction est en base 0
+		exps = (exports *)(((int64) exps)+((int64) ext));
+	}
 
 	//explorer les fonctions exportées
 	while (exps[i].address)
 	{
+		if (exps[i].name < (lchar *) 0x800000)
+		{
+			exps[i].name = (lchar *)(((int64) exps[i].name)+((int64) ext));
+		}
 		if (CompareString(exps[i].name, nom))
 		{
 			//On vérifie si l'extension exporte en adresse relative (par rapport à son adresse) ou réel
-			if (exps[i].address < 0x800000)
+			if (exps[i].address < (void *) 0x800000)
 			{
-				return (exps[i].address+ext);
+				return (void *)(((int64) exps[i].address)+((int64) ext));
 			}
 			else
 			{
 				return exps[i].address;
 			}
 		}
+		i++;
 	}
 
 	//La fonction n'existe pas

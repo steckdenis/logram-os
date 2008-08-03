@@ -44,13 +44,14 @@ resext head =
 exports exps[] =
 	{
 		{&ExtMain, L"ExtMain"},
+		{ 0, 0}						//Fin des exportations
 	};
 
 section sections[] =
 	{
 		{ 0, 0x1000, SECTION_DATA },			//Données
 		{ (void *) 0x1000, 0x1000, SECTION_CODE },	//Code
-		{ 0, 0x1000, SECTION_STACK}			//Taille de la pile (adresse ignorée)
+		{ 0, 0, 0}					//Section de fin
 	};
 
 /* Code du fichier */
@@ -74,5 +75,5 @@ int ExtMain (void *ext, lint message, lint param)
 	}
 	char *t = 0xB8000;
 	*t = 'A';
-	return 0;
+	return 1;	//Tout marche !
 }

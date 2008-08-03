@@ -184,7 +184,49 @@ void LoadDrivers()
 //		- int32 nb	: numéro de driver
 void LoadDriver (int64 block, lchar *drv)
 {
+	int64	dblock;		//bloc du fichier du pilote
+	void	*buf;		//Adresse du buffer temporaire où charger la première page du pilote
+	resext	*head;		//En-tête du pilote
+	section	*sections;	//Adresse des sections
+	int64	drvSize;	//Taille du pilote
+	int	i = 0;		//compteur
+	
+	int	(*entry)(void *ext, lint message, lint param);
+	
 	kprintf_unicode(drv, 0x07);
+	
+	//Ouvrir le pilote
+	dblock = FSL_Open(block, drv);
+	
+	//Allouer la page
+	buf = (void *) VirtualAlloc(0, 1, MEM_PUBLIC, 1);
+	
+	//Charger le pilote
+	FSL_Read(dblock, (void *) buf, 8);
+	
+	//Explorer la liste des sections
+	head = (resext *) buf;
+	sections = head->sections;
+	sections = (section *)(((int64) sections)+((int64) buf)); //Transtypage lourd, mais le compilo n'aime pas les additions de pointeurs :-/
+	while (sections[i].size)
+	{
+		//Pour chaque section, trouver sa taille
+		drvSize += sections[i].size;
+		i++;
+	}
+	
+	//On alloue les pages
+	drvSize -= 4096;	//On a déjà la première page ;-)
+	VirtualAlloc(0, drvSize/4096, MEM_PUBLIC, 1); //On alloue (pas besoin de l'adresse de retour, on alloue juste après *buf.
+	
+	//On charge le pilote
+	FSL_Read(dblock, (void *) buf, drvSize/512);	//Et on charge (on écrase buf, mais ce n'est rien, car c'est la page qui nous manque :-)
+	
+	//Le pilote est chargé, on va pouvoir appeler ExtMain B-)
+	entry = ExtFind((void *) buf, L"ExtMain");
+	
+	//Appeler la fonction
+	kstate(entry((void *) buf, EXT_LOAD, 0)); //Si le chargement réussi, on affiche [   ok   ]
 }
 
 /*****************************************

@@ -1,4 +1,4 @@
-OBJS = starts.o kernels.o kernel.o console.o interrupts.o interruptss.o mem.o boot.o
+OBJS = starts.o kernels.o kernel.o console.o interrupts.o interruptss.o boot.o mem.o ext.o
 
 EXT = kernel
 
