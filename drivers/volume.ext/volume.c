@@ -73,7 +73,5 @@ int ExtMain (void *ext, lint message, lint param)
 			//On a déchargé l'extension de la mémoire
 			break;
 	}
-	char *t = 0xB8000;
-	*t = 'A';
 	return 1;	//Tout marche !
 }

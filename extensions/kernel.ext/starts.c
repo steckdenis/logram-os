@@ -99,6 +99,7 @@ void	start() {
 
 
 	// Affiche le message pour certifier que nous avons chargé le kernel
+	kprintf ("", 0x07);
 	kprintf ("Kernel loaded !", 0x02);
 	kprintf ("", 0x07);
 

@@ -222,7 +222,7 @@ int_13:
 	iretq
 
 int_14:
-	PUSHAL
+	PUSHALL
 	mov qword rdi, [rsp + 136]
 	call int_pf
 	POPALL

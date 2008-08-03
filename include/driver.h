@@ -1,5 +1,5 @@
 /*
- * drivers.h
+ * driver.h
  * This file is part of Logram
  *
  * Copyright (C) 2008 - Denis Steckelmacher
@@ -22,8 +22,8 @@
  
 /* En-tête pour les pilotes */
 
-#ifndef DRIVERS_H
-#define DRIVERS_H
+#ifndef DRIVER_H
+#define DRIVER_H
 
 // Define
 
@@ -49,5 +49,5 @@ typedef struct {
 	void 	*ext;		// Adresse de l'extension qui contient le pilote
 } DEVICE, *lpDEVICE;	// Structure de retour de Initdriver (32 octets)
 
-#endif // DRIVERS_H
+#endif // DRIVER_H
 
