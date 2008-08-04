@@ -35,6 +35,7 @@
 #include "console.h"
 #include "interrupts.h"
 #include "drivers.h"
+#include "thread.h"
 
 // Prototypes des fonctions contenues dans l'extension
 int 	CompareString	(lchar *s1, lchar *s2);
@@ -84,6 +85,9 @@ void InitKernel () {
 	MakeGDT ();
 	// Créer et charger l'IDT (donc activer les interruptions)
 	MakeIDT ();
+	
+	//Initialiser la gestion des threads + NMI
+	ThreadInit();
 	
 	//Initialiser le pilote FSL du démarrage
 	LoadFSLInfos();
