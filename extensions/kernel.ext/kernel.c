@@ -45,6 +45,8 @@ void	MakeGDT 	();
 int 	SplitString	(lchar *str, lchar separator);
 int 	SplitNext	(lchar *str, lchar **out);
 
+void	start_thread	();
+
 char kernelInited = 0; 	// Détermine si le noyau a été chargé (protection)
 
 /*******************************************************************************
@@ -88,6 +90,13 @@ void InitKernel () {
 	
 	//Initialiser la gestion des threads + NMI
 	ThreadInit();
+	
+	for (;;); asm("hlt");
+}
+
+void	start_thread	()
+{
+	//Nous sommes dans le thread !
 	
 	//Initialiser le pilote FSL du démarrage
 	LoadFSLInfos();

@@ -76,6 +76,9 @@ typedef struct
 	int64	rip;
 	int64	rflags;
 	int64	cr0;
+	int64	ss;		//64 bits pour rester aligné
+	int64	cs;		//même chose. Pas besoin de sauvegarder les autres registres
+	int64	tr;		//Registre TR, utile pour le retrouver facilement à la commutation
 	//Sauvegarde SSE (512 octets)
 	char	SSE[512];
 	//Champs propres à Logram

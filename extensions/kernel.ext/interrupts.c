@@ -166,13 +166,6 @@ void int_db() {
 	for (;;);
 }
 
-//Exception #NMI (2)
-void int_nmi() {
-	kprintf("Exception #NMI (2)", 0x04);
-	kprintf("Unending loop", 0x04);
-	for (;;);
-}
-
 //Exception #BP (3)
 void int_bp() {
 	kprintf("Exception #BP (3)", 0x04);

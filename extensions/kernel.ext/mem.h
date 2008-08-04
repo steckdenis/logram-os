@@ -87,6 +87,7 @@ void 	memcopy			(char *dst, char *src, int n);
 void 	CreateSegment		(int index, int16 flags);
 void 	CreateSysSegment	(int index, int64 baseAddress, int16 limit, int16 flags);
 void	CreatePagingStructure 	(int mflags, Process *process);
+void	ReadSegment		(int index, gdtsysrec *out);
 
 #endif // MEM_H
 

@@ -212,6 +212,21 @@ void CreateSysSegment(int index, int64 baseAddress, int16 limit, int16 flags) {
 	enrg->zeros 		= 0;
 }
 
+// Fonction qui lit les informations d'un segment dans la GDT et les place dans une structure sysrec
+//	-index : n° de segment
+//	-*out:	adresse d'une structure sysrec pour réceptionner les données
+void	ReadSegment		(int index, gdtsysrec *out)
+{
+	gdtsysrec	*gdt = (gdtsysrec *) 0x30000;
+
+	out->limit = gdt[index].limit;
+	out->base0_15 = gdt[index].base0_15;
+	out->base16_23 = gdt[index].base16_23;
+	out->flags = gdt[index].flags;
+	out->base24_31 = gdt[index].base24_31;
+	out->base32_63 = gdt[index].base32_63;
+}
+
 // Fonction VirtualFree qui désalloue des pages précédemment allouées
 // Paramètres : - int64 virtAddr 	: adresse virtuelle de la première page
 //		- unsigned int pagesNb 	: nombre de page à libérer

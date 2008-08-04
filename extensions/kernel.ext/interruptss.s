@@ -72,6 +72,9 @@ global int_32
 global int_48
 global int_default
 
+global currThread
+extern firstThread
+
 ; Macros
 %macro PUSHALL 	0
 		push rax
@@ -126,6 +129,17 @@ ptrIDT:
 	dw 4096
 	dq 0x10000
 
+; Interruption NMI : commutation des threads
+;	L'important dans cette fonction, c'est de ne détruire aucun registre, car on a l'équilibre de deux threads sur les bras !
+int_2:
+	cli
+	PUSHALL
+	mov rax, rsp 	;on met dans rax l'adresse de la structure qui contient les push
+	call int_nmi	;et on appelle int_nmi
+	POPALL
+	sti
+iretq
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;								;;
 ;;				ISR				;;
@@ -142,12 +156,6 @@ int_0:
 int_1:
 	PUSHALL
 	call int_db
-	POPALL
-	iretq
-
-int_2:
-	PUSHALL
-	call int_nmi
 	POPALL
 	iretq
 
