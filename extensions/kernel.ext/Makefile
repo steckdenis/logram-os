@@ -3,7 +3,7 @@ OBJS = starts.o kernels.o kernel.o console.o interrupts.o interruptss.o boot.o m
 EXT = kernel
 
 all: $(OBJS)
-	$(LD) $(LDFLAGS) -Tdata 0x800000 -Ttext 0x801000 -o $(EXT).b $(OBJS)
+	$(LD) $(LDFLAGS) -Tdata 0x800000 -Ttext 0x802000 -o $(EXT).b $(OBJS)
 	objcopy -R .note -R .comment -R .eh_frame -S -O binary $(EXT).b $(EXT).ext
 	cp $(EXT).ext $(DESTDIR)/Logram/sys64/$(EXT).ext
 

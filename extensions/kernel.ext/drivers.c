@@ -36,6 +36,8 @@
 #include "mem.h"
 #include "drivers.h"
 
+void	*firstDriver=0;		//Premier pilote de la liste chainée
+
 // Extraite de la libC, recherche un caractère dans une chaîne
 char *strchr (const char *s, int c)
 {
@@ -73,6 +75,8 @@ void LoadDrivers()
 	char	*currDriver; 		//Nom du pilote courant
 	lchar	currDriver_u [100]; 	//Nom du pilote courant en unicode
 	char 	*eos; 			//Pointe sur le caractère de fin de chaîne
+	void	*prevDrv=0;		//Adresse du pilote précédent
+	int	first=1;			//Indique si le pilote est le premier
 	
 	//On ouvre drivers.lst
 	block = FSL_Open(0, L"Logram");
@@ -93,8 +97,14 @@ void LoadDrivers()
 		*eos = '\0';
 		char2wchar(currDriver, currDriver_u);
 		if (CompareString(currDriver_u, L"EndOfList")) break; //Si c'était le dernier pilote, quitter
-		LoadDriver (block, currDriver_u);
+		prevDrv = LoadDriver (block, currDriver_u, prevDrv);
 		currDriver = eos+1;	//Passer au driver suivant
+		if (first)
+		{
+			//Enregistrer le premier pilote de la liste
+			firstDriver = prevDrv;
+			first = 0;
+		}
 	} 
 	
 	//Magnifique, on a tout chargé :)
@@ -104,7 +114,7 @@ void LoadDrivers()
 // Paramètres : - int64 block 	: bloc du dossier du driver
 //		- lchar *drv	: nom du driver
 //		- int32 nb	: numéro de driver
-void LoadDriver (int64 block, lchar *drv)
+void	*LoadDriver	(int64 block, lchar *drv, void *prevDrv)
 {
 	int64	dblock;		//bloc du fichier du pilote
 	void	*buf;		//Adresse du buffer temporaire où charger la première page du pilote
@@ -112,6 +122,8 @@ void LoadDriver (int64 block, lchar *drv)
 	section	*sections;	//Adresse des sections
 	int64	drvSize;	//Taille du pilote
 	int	i = 0;		//compteur
+	void	**pvdrv;	//Pilote précédent
+	void	*truc;
 	
 	int	(*entry)(void *ext, lint message, lint param);
 	
@@ -139,15 +151,79 @@ void LoadDriver (int64 block, lchar *drv)
 	
 	//On alloue les pages
 	drvSize -= 4096;	//On a déjà la première page ;-)
-	VirtualAlloc(0, drvSize/4096, MEM_PUBLIC, 1); //On alloue (pas besoin de l'adresse de retour, on alloue juste après *buf.
-	
-	//On charge le pilote
+	truc = (void *) VirtualAlloc(0, drvSize/4096, MEM_PUBLIC, 1); //On alloue (pas besoin de l'adresse de retour, on alloue juste après *buf). Il faut récupérer le résultat, sinon Logram plante (je ne sais pas pourquoi, il entre en boucle infinie quelque part)
+
+	//On charge le pilote (drvSize/512)
 	FSL_Read(dblock, (void *) buf, drvSize/512);	//Et on charge (on écrase buf, mais ce n'est rien, car c'est la page qui nous manque :-)
 	
 	//Le pilote est chargé, on va pouvoir appeler ExtMain B-)
 	entry = ExtFind((void *) buf, L"ExtMain");
-	
+	if (!entry)
+	{
+		kprintf("Invalid driver", 0x04);
+		return 0;
+	}
 	//Appeler la fonction
-	kstate(entry((void *) buf, EXT_LOAD, 0)); //Si le chargement réussi, on affiche [   ok   ]
+	if (entry((void *) buf, EXT_LOAD, 0))
+	{
+		//Le chargement s'est bien passé, on lie le pilote au pilote précédant
+		kstate(1);
+		if (prevDrv)
+		{
+			pvdrv = (void **) ExtFind((void *) buf, L"NextDriver");
+			*pvdrv = prevDrv;
+		}
+	}
+	else
+	{
+		kstate(0);
+	}
+	return buf;
+}
+
+/******************************************************************************
+	Fonctions exportées
+******************************************************************************/
+
+void	*FindDriver	(lchar *nom)
+{
+	void	*drv;
+	DEVICE	*device;
+	void	**nextDriver;
+	
+	drv = firstDriver;
+	
+	while (drv)
+	{
+		device = ExtFind(drv, L"DriverStruct");
+		if (CompareString(device->driverName, nom))
+		{
+			return drv;
+		}
+		nextDriver = (void **) ExtFind(drv, L"NextDriver");
+		drv = *nextDriver;
+	}
+	return 0;
+}
+
+void	*FindDriverId	(int16 id)
+{
+	void	*drv;
+	DEVICE	*device;
+	void	**nextDriver;
+	
+	drv = firstDriver;
+	
+	while (drv)
+	{
+		device = ExtFind(drv, L"DriverStruct");
+		if (device->id == id)
+		{
+			return drv;
+		}
+		nextDriver = (void **) ExtFind(drv, L"NextDriver");
+		drv = *nextDriver;
+	}
+	return 0;
 }
 

@@ -30,6 +30,7 @@
 
 #include	"console.h"
 #include	"mem.h"
+#include	"drivers.h"
 
 /* Déclaration des fonctions (ExtMain déclarée dans logram.h) */
 int 	CompareString	(lchar *s1, lchar *s2);
@@ -64,6 +65,9 @@ exports exps[] =
 		{ &CompareString, L"CompareString"},
 		{ &SplitString, L"SplitString"},
 		{ &SplitNext, L"SplitNext"},
+		
+		{ &FindDriver, L"FindDriver"},
+		{ &FindDriverId, L"FindDriverId"},
 		{ 0, 0}
 	};
 

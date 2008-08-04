@@ -46,7 +46,6 @@ typedef struct {
 	int	driverClass;	// Classe du pilote
 	int16	id;		// ID du pilote (utilisé par GetDriverByID)
 	lchar	driverName [8];	// Nom du pilote, complété à droite par des espaces (utilisé par GetDriverByName)
-	void 	*ext;		// Adresse de l'extension qui contient le pilote
 } DEVICE, *lpDEVICE;	// Structure de retour de Initdriver (32 octets)
 
 #endif // DRIVER_H

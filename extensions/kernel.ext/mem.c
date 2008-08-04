@@ -84,7 +84,6 @@ int64 VirtualAlloc (int64 _physAddr, unsigned int pagesNb, int mflags, int pid) 
 	} else { // On a bien notre enregistrement
 		ramRecord = i; // Sauvegarder son numéro
 	}
-
 	// Allouons
 	if (mflags & MEM_PUBLIC) { 		// On veut allouer des pages publiques
 		for (i = 0; i < pagesNb; i++) { // On alloue les pages
@@ -97,7 +96,7 @@ int64 VirtualAlloc (int64 _physAddr, unsigned int pagesNb, int mflags, int pid) 
 			int64 virtAddr;		// Adresse virtuelle de la page courante
 
 			// ----------------------------- PDE -----------------------------
-
+			
 			for (j = 0; j < 512; j++) { // Cherche un PDE qui contient encore de l'espace
 				if (PDE [j] & PAGE_NOTFULL) { // L'a t-on trouvé ?
 					break; // Oui, on quitte la boucle
@@ -138,7 +137,7 @@ int64 VirtualAlloc (int64 _physAddr, unsigned int pagesNb, int mflags, int pid) 
 			if (j == 512) { // Si on a pas trouvé de PTE libre, c'est très grave, car il y a un problème de codage
 				return 0; // Retourne 0
 			}
-
+			
 			// On peut maintenant mettre le numéro de PTE dans l'adresse virtuelle
 			virtAddr |= (j << 12);
 
@@ -174,7 +173,7 @@ int64 VirtualAlloc (int64 _physAddr, unsigned int pagesNb, int mflags, int pid) 
 		int64 *addr = (int64 *) _physAddr;
 		*addr = outPhys;
 	}
-
+	
 	return outVirt; // Retourne l'adresse virtuelle de la première page
 }
 

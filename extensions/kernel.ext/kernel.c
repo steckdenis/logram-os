@@ -96,7 +96,14 @@ void InitKernel () {
 
 // Fonction Test qui contiendra tous les tests du système
 void Test () {
+	void *volume;
 
+	volume = FindDriver(L"VOLUME");
+
+	if (volume)
+	{
+		kprintf("Pilote \"VOLUME\" trouve avec FindDriver !", 0x02);
+	}
 }
 
 // Fonction MakeGDT qui se charge de créer et charger la GDT

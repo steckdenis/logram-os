@@ -27,7 +27,9 @@
 
 // Prototypes
 void	LoadDrivers	();
-void	LoadDriver	(int64 block, lchar *drv);
+void	*LoadDriver	(int64 block, lchar *drv, void *prevDrv);
+void	*FindDriver	(lchar *nom);	//Trouve un pilote par son nom (VOLUME, SCREEN, PRINTER, USB, etc)
+void	*FindDriverId	(int16 id);	//Trouve un pilote par son ID.
 
 #endif // DRIVERS_H
 
