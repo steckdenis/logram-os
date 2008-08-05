@@ -148,7 +148,7 @@ void int_nmi() {
 	:: "r" (prevThread->SSE));
 	
 	//Maintenant, on déclare l'actuelle TSS non-active
-	gdt = 0x30000;
+	gdt = (int64 *) 0x30000;
 	gdt[tr>>3] &= 0xFFFFF9FFFFFFFFFF;
 	
 	//Le thread est sauvegardé ! On peut maintenant restaurer le suivant.
@@ -233,7 +233,7 @@ void	*_CreateThread	(void *start, void *PLM4E, void *stack, void *rsp0, int64 rf
 	
 	//On remplit la TSS
 	tr->rs0 = 0; tr->rs1 = 0; tr->rs2 = 0; tr->rs3 = 0;
-	tr->rsp0 = rsp0;
+	tr->rsp0 = (int64) rsp0;
 	tr->rsp = (int64) stack;
 	tr->iomap = 4094; //4ko - 2 octets, la fin du TSS (on n'utilise pas IOMAP)
 	tr->rax = param;
@@ -267,3 +267,4 @@ void	*_CreateThread	(void *start, void *PLM4E, void *stack, void *rsp0, int64 rf
 	//On retourne l'adresse de notre TSS. Le thread est créé, à la prochaine NMI, il aura une chance de recevoir la main.
 	return (void *) tr;
 }
+

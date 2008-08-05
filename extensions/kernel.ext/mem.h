@@ -88,6 +88,7 @@ void 	CreateSegment		(int index, int16 flags);
 void 	CreateSysSegment	(int index, int64 baseAddress, int16 limit, int16 flags);
 void	CreatePagingStructure 	(int mflags, Process *process);
 void	ReadSegment		(int index, gdtsysrec *out);
+void	*GetTSSBaseAddr		(int16 desc);
 
 #endif // MEM_H
 

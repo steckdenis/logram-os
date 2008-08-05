@@ -90,8 +90,6 @@ void InitKernel () {
 	
 	//Initialiser la gestion des threads + NMI
 	ThreadInit();
-	//Maintenant, on peut activer les interruptions
-	asm("sti");
 	
 	//Initialiser le pilote FSL du démarrage
 	LoadFSLInfos();
@@ -100,6 +98,9 @@ void InitKernel () {
 	kprintf ("Loading drivers...", 0x0F);
 	LoadDrivers();
 	kprintf ("Done.", 0x0F);
+	
+	//Maintenant, on peut activer les interruptions
+	asm("sti");
 }
 
 // Fonction Test qui contiendra tous les tests du système

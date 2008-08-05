@@ -40,9 +40,6 @@ int8 PIC2State = 0xFF; // Cette variables représentent le masque d'IRQ du deuxi
 void MakeIDT () {
 	int i; // Itérateur
 
-	// Désactive les interruptions
-	asm ("cli");
-
 	// Initialise toutes les interruptions
 	for (i = 0; i < 256; i++) {
 		CreateIDTSegment (i, 0x10, (int64) &int_default, 0x8E00);
@@ -77,9 +74,6 @@ void MakeIDT () {
 
 	// On charge l'IDT
 	LoadIDT ();
-
-	// On réactive les interruptions
-	//asm ("sti");
 }
 
 // Fonction qui enregistre un nouveau segment dans l'IDT

@@ -231,13 +231,13 @@ void	ReadSegment		(int index, gdtsysrec *out)
 
 //Fonction qui retourne l'adresse de base d'une TSS en fonction du segment
 //	-desc = contenu du registre TR de la TSS à trouver
-void	*GetTSSBaseAddr(int desc)
+void	*GetTSSBaseAddr(int16 desc)
 {
 	gdtsysrec 	*enrg;
 	int64		addr, b015, b1623, b2431, b3263;
 	
 	desc = desc & 0xFFF8;	//Mettre à 0 les attributs (DPL et LDT)
-	enrg = (gdtsysrec *)(0x30000+desc);
+	enrg = (gdtsysrec *)(0x30000 + (int64) desc);
 	
 	b015 = enrg->base0_15;
 	b1623 = enrg->base16_23;

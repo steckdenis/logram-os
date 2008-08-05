@@ -24,6 +24,9 @@
 	En-tête pour la gestion des threads
 ******************************************************************************/ 
 
+#ifndef THREAD_H
+#define THREAD_H
+
 /* Fonction */
 void	ThreadInit	();	//Initialisation des threads et de la NMI
 void	*_CreateThread	(void *start, void *PLM4E, void *stack, void *rsp0, int64 rflags, int64 pid, int64 flags, int64 param); 	//Créer un thread (fonction de bas niveau)
@@ -92,3 +95,6 @@ typedef struct
 	message Messages[64];		//Liste des messages
 	//Le reste est disponible
 } __attribute__((packed)) TSS;
+
+#endif
+
