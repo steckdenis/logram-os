@@ -120,7 +120,7 @@ void Test ()
 			"popq %0"
 		: "=m" (rflags));
 		
-		pThread = (TSS *) _CreateThread(&test_thread, (void *) 0x50000, (void *) 0x90000+(i*0x4000), (void *) 0x80000+(i*0x4000), rflags, 1, 0, 0);
+		pThread = (TSS *) _CreateThread(&test_thread, (void *) 0x50000, (void *) 0x90000+(i*0x4000), (void *) 0x80000+(i*0x4000), rflags, 1, 0, 0); // Les (i*0x4000) sont là pour éviter que tous ces threads aient la même pile.
 		
 		CreateSysSegment(6+(i*2), (int64) pThread, 4096, 0x0089); //i*2 car un segment système fait 2 segments normaux
 	
