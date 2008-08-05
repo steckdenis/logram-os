@@ -1,9 +1,9 @@
-OBJS = starts.o kernels.o kernel.o console.o interrupts.o interruptss.o boot.o mem.o ext.o drivers.o thread.o
+OBJS = ps2.o
 
-EXT = kernel
+EXT = ps2
 
 all: $(OBJS)
-	$(LD) $(LDFLAGS) -e ExtMain -Tdata 0x800000 -Ttext 0x802000 -o $(EXT).b $(OBJS)
+	$(LD) $(LDFLAGS) -e ExtMain -Tdata 0x0 -Ttext 0x1000 -o $(EXT).b $(OBJS)
 	objcopy -R .note -R .comment -R .eh_frame -S -O binary $(EXT).b $(EXT).ext
 	cp $(EXT).ext $(DESTDIR)/Logram/sys64/$(EXT).ext
 
