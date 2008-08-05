@@ -89,14 +89,14 @@ void	start() {
 	//Fonction appellée par Stage2 au démarrage.
 
 	// Récupère les valeurs des registres envoyées par stage2
-	__asm(	"mov %%eax, %0\n"
+	__asm(	"cli\n"
+		"mov %%eax, %0\n"
 		"mov %%bx, %1\n"
 		"mov %%ch, %2\n"
 		"mov %%cl, %3\n"
 		: "=m"(logramSect), "=m"(port), "=m"(master), "=m"(protocol));
 
-	__asm(	"cli\n"
-		"mov %ds, %ax\n"
+	__asm(	"mov %ds, %ax\n"
 		"mov %ax, %es\n"
 		"mov $0x60000, %rax\n"
 		"mov %rax, %rsp");

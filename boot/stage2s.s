@@ -85,4 +85,4 @@ JmpToKernel:
 	mov cl, [protocol]
 	
 	; Sauter dans Kernel.ext
-	jmp dword 0x0010:0x801000
+	jmp dword 0x0010:0x802000

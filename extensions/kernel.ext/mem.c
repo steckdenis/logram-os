@@ -229,6 +229,26 @@ void	ReadSegment		(int index, gdtsysrec *out)
 	out->base32_63 = gdt[index].base32_63;
 }
 
+//Fonction qui retourne l'adresse de base d'une TSS en fonction du segment
+//	-desc = contenu du registre TR de la TSS à trouver
+void	*GetTSSBaseAddr(int desc)
+{
+	gdtsysrec 	*enrg;
+	int64		addr, b015, b1623, b2431, b3263;
+	
+	desc = desc & 0xFFF8;	//Mettre à 0 les attributs (DPL et LDT)
+	enrg = (gdtsysrec *)(0x30000+desc);
+	
+	b015 = enrg->base0_15;
+	b1623 = enrg->base16_23;
+	b2431 = enrg->base24_31;
+	b3263 = enrg->base32_63;
+	
+	addr = b015 | (b1623 << 16) | (b2431 << 24) | (b3263 << 32);
+	
+	return (void *) addr;
+}
+
 // Fonction VirtualFree qui désalloue des pages précédemment allouées
 // Paramètres : - int64 virtAddr 	: adresse virtuelle de la première page
 //		- unsigned int pagesNb 	: nombre de page à libérer

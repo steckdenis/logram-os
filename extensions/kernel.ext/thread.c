@@ -32,7 +32,6 @@
 #include "thread.h"
 #include "mem.h"
 
-TSS	*currThread = (TSS *) 0;
 TSS	*firstThread = (TSS *) 0;	//Premier thread de la liste
 
 void NMI_enable(void)
@@ -43,23 +42,25 @@ void NMI_enable(void)
 
 void ThreadInit()
 {
-	void	*pThread;		//Thread créé
+	TSS	*pThread;		//Thread créé
 	int64	rflags;
 	
 	//Créer le thread principal
 	asm(	"pushfq\n"
 		"popq %0"
 	: "=m" (rflags));
-	pThread = _CreateThread(0, (void *) 0x50000, (void *) 0x90000, (void *) 0x80000, rflags, 1, 0, 0); //Pas besoin de start_thread, puisqu'à la prochaine NMI, il se fait archiver
+	pThread = (TSS *) _CreateThread(0, (void *) 0x50000, (void *) 0x90000, (void *) 0x80000, rflags, 1, 0, 0); //Pas besoin de start_thread, puisqu'à la prochaine NMI, il se fait archiver
 	
 	CreateSysSegment(4, (int64) pThread, 4096, 0x0089);
+	
+	pThread->tr = 32;
 	
 	//Passer à ce thread
 	short content = 32;
 	asm ("ltr (%0)" :: "a"(&content));
 	
 	//Sauter dedans
-	asm("int $2");
+	asm("int $32");
 }
 
 //structure propre à la NMI
@@ -96,10 +97,11 @@ void int_nmi() {
 	TSS	*nextThread;	//TSS du thread qui va avoir la main
 	int16	tr;		//Registre tr
 	int64	addr;		//Variable pour la calcul d'adresses
-	int64	cr0;		//cr0
+	int64	cr3;		//cr3
+	int64	*gdt;
 	
 	gdtsysrec	tss;	//Segment de TSS
-	
+
 	//Récupérer le stackframe
 	asm(	"mov %%rax, %0"
 	: "=m" (st));
@@ -109,15 +111,13 @@ void int_nmi() {
 	: "=a" (tr));
 	
 	//On récupère aussi le cr0
-	asm(	"mov %%cr0, %0"
-	: "=a" (cr0));
+	asm(	"mov %%cr3, %0"
+	: "=a" (cr3));
 	
 	//On archive le tout dans le TSS courrant du thread. Il faut d'abord retrouver la base de cette TSS
-	ReadSegment(tr, &tss); //On trouve le descripteur
-	addr = tss.base0_15 | (((int64 )tss.base16_23) << 16) | (((int64 )tss.base24_31) << 24) | (((int64 )tss.base32_63) << 32); //Et on retrouve son adresse de base
-	prevThread = (TSS *) addr; //ouf ! c'est fait.
+	prevThread = (TSS *) GetTSSBaseAddr(tr);
 	
-	prevThread = firstThread; //Pour le moment, les quelques lignes ci-dessus ne marchent pas
+	//prevThread = firstThread; //Pour le moment, les quelques lignes ci-dessus ne marchent pas
 	
 	//On archive le thread courrant
 	prevThread->ss = st->ss;
@@ -141,16 +141,20 @@ void int_nmi() {
 	prevThread->r13 = st->r13;
 	prevThread->r14 = st->r14;
 	prevThread->r15 = st->r15;
-	prevThread->cr0 = cr0;
+	prevThread->cr3 = cr3;
 	
 	//On archive les données XMM, MMX, x87 et autres
 	asm(	"fxsave (%0)"
 	:: "r" (prevThread->SSE));
 	
+	//Maintenant, on déclare l'actuelle TSS non-active
+	gdt = 0x30000;
+	gdt[tr>>3] &= 0xFFFFF9FFFFFFFFFF;
+	
 	//Le thread est sauvegardé ! On peut maintenant restaurer le suivant.
 	//Ici, on prend le thread suivant, bêtement. On pourrait à cet endroit-ci ajouter un olgarithme d'ordonnancement pour trouver le thread qui a le plus besoin de temps d'exécution.
 	nextThread = (TSS *) prevThread->NextThread;
-	
+	//kprintf("    teste", 0x07);
 	if (!nextThread)
 	{
 		//On est arrivé à la fin de la chaine, on reprend le premier
@@ -183,16 +187,17 @@ void int_nmi() {
 	st->r13 = nextThread->r13;
 	st->r14 = nextThread->r14;
 	st->r15 = nextThread->r15;
-	cr0 = nextThread->cr0;
+	cr3 = 0x50000; //nextThread->cr3;
 	
 	//On récupère aussi le cr0
-	asm(	"mov %0, %%cr0"
-	:: "a" (cr0));
+
+	asm(	"mov %0, %%cr3"
+	:: "a" (cr3));
 	
 	//On change le registre TR
 	short content = nextThread->tr;
 	asm ("ltr (%0)" :: "a"(&content));
-	
+
 	/*
 		Et voilà, on a changé de thread. On va retourner dans la partie en assembleur, qui va
 		POPer le contenu du stackframe, et donc restaurer tous les registres. iretq finira le
@@ -215,18 +220,28 @@ void	*_CreateThread	(void *start, void *PLM4E, void *stack, void *rsp0, int64 rf
 {
 	TSS	*tr;
 	TSS	*thread;
+	int64	cs, ss;
 	
 	//On alloue le TSS
 	tr = (TSS *) VirtualAlloc(0, 1, MEM_PUBLIC, pid); 
 	
+	//On récupère CS et SS courant (puisque ces segments sont propres au processus, même SS)
+	asm(	"mov %%ss, %0"
+	: "=a" (ss));
+	asm(	"mov %%cs, %0"
+	: "=a" (cs));
+	
 	//On remplit la TSS
 	tr->rs0 = 0; tr->rs1 = 0; tr->rs2 = 0; tr->rs3 = 0;
 	tr->rsp0 = rsp0;
+	tr->rsp = (int64) stack;
 	tr->iomap = 4094; //4ko - 2 octets, la fin du TSS (on n'utilise pas IOMAP)
 	tr->rax = param;
 	tr->rip = (int64) start;
 	tr->rflags = rflags;
-	tr->cr0 = (int64) PLM4E;
+	tr->cr3 = (int64) PLM4E;
+	tr->cs = cs;
+	tr->ss = ss;
 	tr->pid = pid;
 	tr->flags = flags;
 	tr->pErrorStack = 0;
@@ -238,8 +253,6 @@ void	*_CreateThread	(void *start, void *PLM4E, void *stack, void *rsp0, int64 rf
 	if (!firstThread)
 	{
 		firstThread = tr;
-		//Le prochain thread a exécuter est celui-ci
-		currThread = tr;
 	}
 	else
 	{

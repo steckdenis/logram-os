@@ -307,18 +307,11 @@ void int_sx() {
 	for (;;);
 }
 
-//Interruption horloge (32)
+//Interruption #NMI
 void int_clock() {
-	static int tic = 0;
-	static char chars[] = "|/-\\";
-	char mchar;
-	char *screen = (char *)(0xB8000+158);
-	*(screen + 1) = 0x07;
-	tic++;
-	
-	mchar = chars[tic&3];
-
-	*screen = mchar;
+	kprintf("Exception #NMI (2)", 0x04);
+	kprintf("Unending loop", 0x04);
+	for (;;);
 }
 
 //Interruption par défaut

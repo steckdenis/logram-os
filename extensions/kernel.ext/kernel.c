@@ -90,8 +90,8 @@ void InitKernel () {
 	
 	//Initialiser la gestion des threads + NMI
 	ThreadInit();
-	
-	//Nous sommes dans le thread !
+	//Maintenant, on peut activer les interruptions
+	asm("sti");
 	
 	//Initialiser le pilote FSL du démarrage
 	LoadFSLInfos();
@@ -103,14 +103,42 @@ void InitKernel () {
 }
 
 // Fonction Test qui contiendra tous les tests du système
-void Test () {
-	void *volume;
+void	test_thread();
+void Test () 
+{
+	int i;
+	
+	//On va tester les threads :D. Pour cela, créer 4 threads, qui vont exécuter le même code, mais avec une pile différente (et une variable globale pour la synchro)
 
-	volume = FindDriver(L"VOLUME");
-
-	if (volume)
+	for (i=0;i<4;i++)
 	{
-		kprintf("Pilote \"VOLUME\" trouve avec FindDriver !", 0x02);
+		TSS	*pThread;		//Thread créé
+		int64	rflags;
+	
+		//Créer le thread principal
+		asm(	"pushfq\n"
+			"popq %0"
+		: "=m" (rflags));
+		
+		pThread = (TSS *) _CreateThread(&test_thread, (void *) 0x50000, (void *) 0x90000+(i*0x4000), (void *) 0x80000+(i*0x4000), rflags, 1, 0, 0);
+		
+		CreateSysSegment(6+(i*2), (int64) pThread, 4096, 0x0089); //i*2 car un segment système fait 2 segments normaux
+	
+		pThread->tr = (6+(i*2))<<3;
+	}
+	while (1) 
+	{
+		kprintf("Thread 0", 0x02);
+		asm("hlt");
+	}
+}
+
+void test_thread()
+{
+	while (1)
+	{
+		kprintf("Autre thread", 0x09);
+		asm("hlt");
 	}
 }
 

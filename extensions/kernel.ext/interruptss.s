@@ -129,9 +129,9 @@ ptrIDT:
 	dw 4096
 	dq 0x10000
 
-; Interruption NMI : commutation des threads
+; Interruption horloge : commutation des threads
 ;	L'important dans cette fonction, c'est de ne détruire aucun registre, car on a l'équilibre de deux threads sur les bras !
-int_2:
+int_32:
 	cli
 	PUSHALL
 	mov rax, rsp 	;on met dans rax l'adresse de la structure qui contient les push
@@ -269,7 +269,7 @@ int_30:
 	POPALL
 	iretq
 
-int_32:
+int_2:
 	PUSHALL
 	call int_clock
 	POPALL
