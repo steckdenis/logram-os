@@ -1,8 +1,9 @@
 /*
- * exemple.c
+ * fslcore.c
  * This file is part of Logram
  *
- * Copyright (C) 2008 - Bruno Régaldo
+ * Copyright (C) 2008 - Denis Steckelmacher
+ *		      - Bruno Régaldo
  *
  * Logram is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,17 +21,19 @@
  * Boston, MA  02110-1301  USA
  */
  
-/*
- 	Driver qui s'occupe de tous les volumes de stockages du système
+/* 
+	Fichier principal du pilote fsl.ext.
+	Ce pilote permet l'utilisation du système de fichiers FSL.
 */
-
-/* En-tête du fichier */
 
 // Inclusions
 #include <types.h>
 #include <logram.h>
 #include <driver.h>
+#include <asm.h>
+#include <drivers/fsl_driver.h>
 
+// Variables globales
 exports exps[];
 section sections[];
 void	*nxtDrv;
@@ -46,9 +49,9 @@ resext head =
 
 exports exps[] =
 	{
-		{&ExtMain, L"ExtMain"},
-		{&nxtDrv, L"NextDriver"},
-		{&device, L"DriverStruct"},
+		{&ExtMain, 	L"ExtMain"},
+		{&nxtDrv, 	L"NextDriver"},
+		{&device, 	L"DriverStruct"},
 		{ 0, 0}						//Fin des exportations
 	};
 
@@ -64,13 +67,12 @@ void	*nxtDrv = (void *) 0;
 DEVICE	device =
 	{
 		sizeof(DEVICE),
-		DRIVERCLASS_MISC,
-		0,
-		{ L'V', L'O', L'L', L'U', L'M', L'E', 0, 0 }
+		DRIVERCLASS_FS,
+		3,
+		{ L'F', L'S', L'L', 0, 0, 0, 0, 0 }
 	};
-
-/* Code du fichier */
-
+	
+// Fonction principale de l'extension
 int ExtMain (void *ext, lint message, lint param)
 {
 	switch (message)
@@ -88,5 +90,6 @@ int ExtMain (void *ext, lint message, lint param)
 			//On a déchargé l'extension de la mémoire
 			break;
 	}
-	return 1;	//Tout marche !
+	return 1;
 }
+

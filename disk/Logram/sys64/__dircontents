@@ -1,6 +1,7 @@
-4 0
+6 0
 kernel.ext
 volume.ext
 drivers.lst
 ps2.ext
-
+ide.ext
+fsl.ext

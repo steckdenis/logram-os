@@ -1,3 +1,5 @@
 volume.ext
 ps2.ext
+ide.ext
+fsl.ext
 EndOfList

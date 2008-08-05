@@ -37,7 +37,7 @@
 // Variables globales
 exports exps[];
 section sections[];
-void	*prevDrv;
+void	*nxtDrv;
 DEVICE	device;
 
 resext head = 
@@ -50,9 +50,13 @@ resext head =
 
 exports exps[] =
 	{
-		{&ExtMain, L"ExtMain"},
-		{&prevDrv, L"NextDriver"},
-		{&device, L"DriverStruct"},
+		{&ExtMain, 	L"ExtMain"},
+		{&nxtDrv, 	L"NextDriver"},
+		{&device, 	L"DriverStruct"},
+		{&SendToCmd, 	L"SendToCmd"},
+		{&SendToData, 	L"SendToData"},
+		{&ReadFromCmd, 	L"ReadFromCmd"},
+		{&ReadFromData, L"ReadFromData"},
 		{ 0, 0}						//Fin des exportations
 	};
 
@@ -63,12 +67,12 @@ section sections[] =
 		{ 0, 0, 0}					//Section de fin
 	};
 	
-void	*prevDrv = (void *) 0;
+void	*nxtDrv = (void *) 0;
 
 DEVICE	device =
 	{
 		sizeof(DEVICE),
-		DRIVERCLASS_MISC,			//Et oui, volume.ext ne correspond à aucun type de pilote
+		DRIVERCLASS_MISC,
 		1,
 		{ L'P', L'S', L'/', L'2', 0, 0, 0, 0 }
 	};

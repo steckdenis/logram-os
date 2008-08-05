@@ -75,7 +75,7 @@ void LoadDrivers()
 	char	*currDriver; 		//Nom du pilote courant
 	lchar	currDriver_u [100]; 	//Nom du pilote courant en unicode
 	char 	*eos; 			//Pointe sur le caractère de fin de chaîne
-	void	*prevDrv=0;		//Adresse du pilote précédent
+	void	*nxtDrv=0;		//Adresse du pilote suivant
 	int	first=1;			//Indique si le pilote est le premier
 	
 	//On ouvre drivers.lst
@@ -97,12 +97,12 @@ void LoadDrivers()
 		*eos = '\0';
 		char2wchar(currDriver, currDriver_u);
 		if (CompareString(currDriver_u, L"EndOfList")) break; //Si c'était le dernier pilote, quitter
-		prevDrv = LoadDriver (block, currDriver_u, prevDrv);
+		nxtDrv = LoadDriver (block, currDriver_u, nxtDrv);
 		currDriver = eos+1;	//Passer au driver suivant
 		if (first)
 		{
 			//Enregistrer le premier pilote de la liste
-			firstDriver = prevDrv;
+			firstDriver = nxtDrv;
 			first = 0;
 		}
 	} 
@@ -113,8 +113,8 @@ void LoadDrivers()
 // Charge un driver
 // Paramètres : - int64 block 	: bloc du dossier du driver
 //		- lchar *drv	: nom du driver
-//		- int32 nb	: numéro de driver
-void	*LoadDriver	(int64 block, lchar *drv, void *prevDrv)
+//		-  void *nxtDrv : driver suivant
+void	*LoadDriver	(int64 block, lchar *drv, void *nxtDrv)
 {
 	int64	dblock;		//bloc du fichier du pilote
 	void	*buf;		//Adresse du buffer temporaire où charger la première page du pilote
@@ -122,8 +122,7 @@ void	*LoadDriver	(int64 block, lchar *drv, void *prevDrv)
 	section	*sections;	//Adresse des sections
 	int64	drvSize;	//Taille du pilote
 	int	i = 0;		//compteur
-	void	**pvdrv;	//Pilote précédent
-	void	*truc;
+	void	**nxtdrv;	//Pilote suivant
 	
 	int	(*entry)(void *ext, lint message, lint param);
 	
@@ -151,7 +150,7 @@ void	*LoadDriver	(int64 block, lchar *drv, void *prevDrv)
 	
 	//On alloue les pages
 	drvSize -= 4096;	//On a déjà la première page ;-)
-	truc = (void *) VirtualAlloc(0, drvSize/4096, MEM_PUBLIC, 1); //On alloue (pas besoin de l'adresse de retour, on alloue juste après *buf). Il faut récupérer le résultat, sinon Logram plante (je ne sais pas pourquoi, il entre en boucle infinie quelque part)
+	int64 bug = VirtualAlloc(0, drvSize/4096, MEM_PUBLIC, 1); //On alloue (pas besoin de l'adresse de retour, on alloue juste après *buf). Il faut récupérer le résultat, sinon Logram plante (je ne sais pas pourquoi, il entre en boucle infinie quelque part)
 
 	//On charge le pilote (drvSize/512)
 	FSL_Read(dblock, (void *) buf, drvSize/512);	//Et on charge (on écrase buf, mais ce n'est rien, car c'est la page qui nous manque :-)
@@ -168,10 +167,10 @@ void	*LoadDriver	(int64 block, lchar *drv, void *prevDrv)
 	{
 		//Le chargement s'est bien passé, on lie le pilote au pilote précédant
 		kstate(1);
-		if (prevDrv)
+		if (nxtDrv)
 		{
-			pvdrv = (void **) ExtFind((void *) buf, L"NextDriver");
-			*pvdrv = prevDrv;
+			nxtdrv = (void **) ExtFind((void *) buf, L"NextDriver");
+			*nxtdrv = nxtDrv;
 		}
 	}
 	else

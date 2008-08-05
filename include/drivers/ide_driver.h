@@ -1,8 +1,9 @@
 /*
- * ps2.h
+ * ide_driver.h
  * This file is part of Logram
  *
  * Copyright (C) 2008 - Bruno Régaldo
+ *		      - Denis Steckelmacher
  *
  * Logram is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,22 +21,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
-	Fichier d'en-tête du pilote.
-*/
+#ifndef IDE_DRIVER_H
+#define IDE_DRIVER_H
 
-#ifndef PS2_H
-#define PS2_H
+/*  Defines propres au pilote de disque, accessible à tout le système*/
 
-// Ports PS/2
-#define PS2_COMMAND	0x64
-#define PS2_DATA	0x60
+//Commandes ioctl
+#define	IOCTL_BLOCK_SIZE	0x01	//Retourne le nombre d'octets dans un bloc
+#define IOCTL_BLOCK_COUNT	0x02	//Retourne le nombre total de blocs sur le disque
+#define IOCTL_BLOCK_CACHE	0x03	//Définis la taille du cache (0 pour désactiver)
 
-// Prototypes
-char SendToCmd 		(unsigned char cmd);
-char ReadFromData 	(unsigned char *buf);
-void SendToData 	(unsigned char data);
-void ReadFromCmd 	(unsigned char *buf);
+#endif // IDE_DRIVER_H
 
-#endif // PS2_H
 
