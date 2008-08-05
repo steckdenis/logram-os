@@ -91,11 +91,6 @@ void InitKernel () {
 	//Initialiser la gestion des threads + NMI
 	ThreadInit();
 	
-	for (;;); asm("hlt");
-}
-
-void	start_thread	()
-{
 	//Nous sommes dans le thread !
 	
 	//Initialiser le pilote FSL du démarrage

@@ -32,8 +32,6 @@
 #include "thread.h"
 #include "mem.h"
 
-extern void start_thread();
-
 TSS	*currThread = (TSS *) 0;
 TSS	*firstThread = (TSS *) 0;	//Premier thread de la liste
 
@@ -52,16 +50,13 @@ void ThreadInit()
 	asm(	"pushfq\n"
 		"popq %0"
 	: "=m" (rflags));
-	pThread = _CreateThread(&start_thread, (void *) 0x50000, (void *) 0x90000, (void *) 0x80000, rflags, 1, 0, 0);
+	pThread = _CreateThread(0, (void *) 0x50000, (void *) 0x90000, (void *) 0x80000, rflags, 1, 0, 0); //Pas besoin de start_thread, puisqu'à la prochaine NMI, il se fait archiver
 	
 	CreateSysSegment(4, (int64) pThread, 4096, 0x0089);
 	
 	//Passer à ce thread
 	short content = 32;
 	asm ("ltr (%0)" :: "a"(&content));
-	
-	//Mettre en place la NMI
-	NMI_enable();
 	
 	//Sauter dedans
 	asm("int $2");
@@ -121,6 +116,8 @@ void int_nmi() {
 	ReadSegment(tr, &tss); //On trouve le descripteur
 	addr = tss.base0_15 | (((int64 )tss.base16_23) << 16) | (((int64 )tss.base24_31) << 24) | (((int64 )tss.base32_63) << 32); //Et on retrouve son adresse de base
 	prevThread = (TSS *) addr; //ouf ! c'est fait.
+	
+	prevThread = firstThread; //Pour le moment, les quelques lignes ci-dessus ne marchent pas
 	
 	//On archive le thread courrant
 	prevThread->ss = st->ss;

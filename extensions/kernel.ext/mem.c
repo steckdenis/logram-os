@@ -219,6 +219,8 @@ void	ReadSegment		(int index, gdtsysrec *out)
 {
 	gdtsysrec	*gdt = (gdtsysrec *) 0x30000;
 
+	index = index>>3;	//On reprend le sélecteur de base, sans les attributs mis dans les bits de poids faible
+
 	out->limit = gdt[index].limit;
 	out->base0_15 = gdt[index].base0_15;
 	out->base16_23 = gdt[index].base16_23;
