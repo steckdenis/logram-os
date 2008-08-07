@@ -78,7 +78,7 @@ DEVICE	device =
 	};
 
 // Fonction principale de l'extension
-int ExtMain (void *ext, lint message, lint param)
+int ExtMain (void *ext, void *kernAddr, void *efAddr, lint message, lint param)
 {
 	switch (message)
 	{

@@ -74,4 +74,4 @@ typedef struct {
 	*ext : adresse à laquelle a été chargée l'extension
 	message : message envoyé (EXT_xxx)
 	param : paramètre (éventuelement passé par l'application hôte) */
-int	ExtMain(void *ext, lint message, lint param);
+int	ExtMain(void *ext, void *kernAddr, void *efAddr, lint message, lint param);

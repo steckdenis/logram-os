@@ -124,7 +124,7 @@ void	*LoadDriver	(int64 block, lchar *drv, void *prevDrv)
 	int	i = 0;		//compteur
 	void	**nxtdrv;	//Pilote suivant
 	
-	int	(*entry)(void *ext, lint message, lint param);
+	int	(*entry)(void *ext, void *kernAddr, void *efAddr, lint message, lint param);
 	
 	kprintf_unicode(drv, 0x07);
 	
@@ -163,7 +163,7 @@ void	*LoadDriver	(int64 block, lchar *drv, void *prevDrv)
 		return 0;
 	}
 	//Appeler la fonction
-	if (entry((void *) buf, EXT_LOAD, 0))
+	if (entry((void *) buf, (void *) 0x800000, (void *) &ExtFind, EXT_LOAD, 0))
 	{
 		//Le chargement s'est bien passé, on lie le pilote au pilote précédant
 		kstate(1);

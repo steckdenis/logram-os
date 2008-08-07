@@ -59,7 +59,7 @@ char kernelInited = 0; 	// Détermine si le noyau a été chargé (protection)
 	Fonctions du démarrage
 ******************************************/
 
-int	ExtMain(void *ext, lint message, lint param)
+int	ExtMain(void *ext, void *kernaddr, void *efAddr, lint message, lint param)
 {
 	switch (message)
 	{
@@ -111,7 +111,7 @@ void Test ()
 	
 	//On va tester les threads :D. Pour cela, créer 4 threads, qui vont exécuter le même code, mais avec une pile différente (et une variable globale pour la synchro)
 
-	for (i=0;i<2;i++)
+	for (i=0;i<4;i++)
 	{
 		TSS	*pThread;		//Thread créé
 		int64	rflags;

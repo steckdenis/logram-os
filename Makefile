@@ -7,6 +7,8 @@ export CFLAGS = -c -x c -g -O0 -fshort-wchar -I $(TOPDIR)/include/ -nostartfiles
 export LDFLAGS = -N -e main -melf_x86_64
 export ASMFLAGS = -felf64
 
+$(VERBOSE).SILENT:
+
 all: 
 	@(cd extensions && $(MAKE)) 
 	@(cd boot && $(MAKE)) 

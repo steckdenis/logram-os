@@ -31,6 +31,17 @@
 #include <logram.h>
 #include <driver.h>
 
+//Structures
+
+typedef struct
+{
+	lint	(*ReadBlock)(int device, lint block, void *buf);	//Adresse de la fonction de lecture
+	lint	(*WriteBlock)(int device, lint block, void *buf);	//Et d'écrite
+	int	nDevice;	//Paramètre à envoyer à device.
+} volume;			//Structure volume renseignée par les pilotes
+
+//En-tête du fichier d'extension
+
 exports exps[];
 section sections[];
 void	*nxtDrv;
@@ -68,10 +79,12 @@ DEVICE	device =
 		0,
 		{ L'V', L'O', L'L', L'U', L'M', L'E', 0, 0 }
 	};
+	
+/* Variable globales */
 
 /* Code du fichier */
 
-int ExtMain (void *ext, lint message, lint param)
+int ExtMain (void *ext, void *kernAddr, void *efAddr, lint message, lint param)
 {
 	switch (message)
 	{
