@@ -47,134 +47,73 @@ void memcopy (char *dst, char *src, int n)
 //		- unsigned int pagesNb 	: nombre de pages à allouer
 //		- int mflags 		: flags de la fonction
 //		- int pid 		: id du processus qui mappe la page (1 si kernel)
-int64 VirtualAlloc (int64 _physAddr, unsigned int pagesNb, int mflags, int pid) {
-	int flags;				// Flags de la page à mapper
-	int64 outVirt = 0;			// Adresse virtuelle de la première page
-	int64 outPhys = 0;			// Adresse physique de la première page
-	int i;					// Itérateur
-	int16 *ramPages = (int16 *) 0x400000;	// Adresse de la table des pages RAM
-	int64 ramRecord = 0;			// Numéro d'enregistrement dans la table des pages RAM
+void *VirtualAlloc (int64 physicaladdr, unsigned int pagesNb, int mflags, int pid) {
+	int64	physaddr, logaddr, flags, i, _logaddr, c;
+	int64	*globalpages = (int64 *) 0x201000;
+	int16	*rampages = (int16 *) 0x400000;	
 
-	// Remplissons les flags
-	flags = PAGE_PRESENT; // La page est dans la RAM
-	if (mflags & MEM_NOTCACHEABLE) 	flags |= PAGE_CACHEDISABLE; 	// La page ne peut pas être copiée dans le cache
-	if (mflags & MEM_WRITETHROUGH) 	flags |= PAGE_WRITETHROUGH; 	// La page est en WRITE_THROUGH
-	if (mflags & MEM_NX) 		flags |= PAGE_NX;		// La page ne peut pas être exécutée
-	if (!(mflags & MEM_READONLY)) 	flags |= PAGE_WRITE;		// La page peut être écrite
-	if (!(mflags & MEM_PROTECTED)) 	flags |= PAGE_USER;		// La page peut être accessible aux applications
-	if (mflags & MEM_NOTPAGEABLE) 	pid = 1;			// La page ne peut être déplacée dans le swap
+	flags = PAGE_PRESENT;
 
-	// Recherchons l'adresse physique contigüe de nos pages à allouer
-	for (i = 0; ramPages [i] != 0xFFFF; i++) { // Tant que nous avons pas atteint la fin de la ram, chercher une page libre
-		if (ramPages [i] == 0) { // Page libre ?
-			int j; // Itérateur
+	if (mflags & MEM_NOTCACHEABLE) flags += PAGE_CACHEDISABLE;
+	if (mflags & MEM_WRITETHROUGH) flags += PAGE_WRITETHROUGH;
+	if (mflags & MEM_NX) flags += PAGE_NX;
+	if (!(mflags & MEM_READONLY)) flags += PAGE_WRITE;
+	if (!(mflags & MEM_PROTECTED)) flags += PAGE_USER; 
+	if (mflags & MEM_NOTPAGEABLE) pid = 1;		//pid des pages qu'on ne peut vider dans le swap
 
-			for (j = 1; j < pagesNb; j++) { // Regardons s'il y a la place pour les pages suivantes
-				if (ramPages [i + j] != 0) { // Notre page suivante n'est pas libre
-					break; // Continuer la recherche
-				}
-			}
-			if (j == pagesNb) { // On a trouvé une zone de mémoire libre pour toutes nos pages d'affilées
-				break; // Quittons l'itération
-			}
+	if (mflags & MEM_PUBLIC) {
+		//On veut allouer une page globale
+		
+		//Nous sommes dans l'espace publique, il suffit de trouver un enregistrement à 0
+		i = 0x902;	//On saute les premières pages utilisées par le noyau, ne pas modifier.			
+		while (globalpages[i]) 
+		{
+			//passer à la page suivante, celle-ci est prise
+			i++;
 		}
-	}
-	if (ramPages [i] == 0xFFFF) { // On a atteint la fin de la Ram
-		return 0; // Retourner 0
-	} else { // On a bien notre enregistrement
-		ramRecord = i; // Sauvegarder son numéro
-	}
-	// Allouons
-	if (mflags & MEM_PUBLIC) { 		// On veut allouer des pages publiques
-		for (i = 0; i < pagesNb; i++) { // On alloue les pages
-			int64 *PDE = (int64 *) 0x52000; // PDE
-			int64 *PTE = 0;			// PTE
-			int j;				// Itérateur
-			int64 used;			// PTE utilisés dans le PDE
-			int64 tmp;			// Temporaire
-			int64 physAddr = 0;		// Adresse physique de la page courante
-			int64 virtAddr;		// Adresse virtuelle de la page courante
 
-			// ----------------------------- PDE -----------------------------
-			
-			for (j = 0; j < 512; j++) { // Cherche un PDE qui contient encore de l'espace
-				if (PDE [j] & PAGE_NOTFULL) { // L'a t-on trouvé ?
-					break; // Oui, on quitte la boucle
+		//Nous en avons une à 0.
+		logaddr = i<<12;
+
+		if (mflags & MEM_PHYSICALADDR) 
+		{
+			//L'adresse physique voulue est donnée
+			physaddr = physicaladdr;
+		} 
+		else 
+		{
+			//Il va falloir en trouver une
+			//Il suffit d'explorer les pages physiques. Il faut faire attention à ne pas dépasser la fin de la RAM
+			i = 0x902;
+			while (rampages[i]) 
+			{
+				//Passer à la page suivante
+				i++;
+				//On est peut-être à la fin de la RAM, on avait vérifié la dernière page
+				if (rampages[i] == 0xFFFF) 
+				{
+					//Décharger une page
 				}
 			}
-			if (j == 512) { // Si on a pas trouvé de PDE libre, on retourne 0
-				return 0;
-			}
-			// On écrit le numéro de notre PDE dans l'adresse virtuelle
-			virtAddr = j << 21;
 
-			// On incrémente le nombre de pages utilisées dans le PDE
-			used = (PDE [j] & 0x7FF0000000000000) >> 52;
-			used++;
-			if (used == 512) { // Si notre PDE est rempli, écrire le nouveau nombre de PTE et effacer notre flag PAGE_NOTFULL
-				used = used << 52;
-				PDE [j] &= 0x800FFFFFFFFFFFFF;
-				PDE [j] |= used;
-				PDE [j] &= 0xFFFFFFFFFFFFFDFF;
-			} else { // Ecrire le nouveau nombre de PTE
-				used = used << 52;
-				PDE [j] &= 0x800FFFFFFFFFFFFF;
-				PDE [j] |= used;
-			}
-
-			// ----------------------------- PTE -----------------------------
-
-			// On localise la PTT
-			tmp = PDE [j];
-			tmp &= 0x7FFFFFFFFF000;
-			PTE = (int64 *) tmp;
-
-			for (j = 0; j < 512; j++) { // Cherche un PTE libre
-				if (PTE [j] == 0) { // S'il est libre
-					break; // Quitter la boucle
-				}
-			}
-			if (j == 512) { // Si on a pas trouvé de PTE libre, c'est très grave, car il y a un problème de codage
-				return 0; // Retourne 0
-			}
-			
-			// On peut maintenant mettre le numéro de PTE dans l'adresse virtuelle
-			virtAddr |= (j << 12);
-
-			// Créons le PTE
-			PTE [j] = flags;
-			if (_physAddr != 0 && !(mflags & MEM_OUTPHYSICAL)) { // Si on a indiqué une valeur précise pour l'adresse physique
-				physAddr = _physAddr + i * 4096;
-				PTE [j] |= (physAddr & 0xFFFFFFFFFF000);
-			} else { // Sinon on doit trouver notre adresse physique
-				// On a notre page, on l'inscrit dans la table des enregistrements RAM
-				ramPages [ramRecord + i] = pid;
-
-				// On calcule l'adresse physique
-				physAddr = 0x900000 + (ramRecord + i) * 4096;
-
-				// On indique quelle est l'adresse physique dans le PTE
-				PTE [j] |= (physAddr & 0xFFFFFFFFFF000);
-			}
-			
-			if (i == 0) { // Si on map notre première page
-				// Sauvegarder son adresse physique et virtuelle pour la fin de la fonction
-				outVirt 	= virtAddr;
-				outPhys 	= physAddr;
-			}
+			physaddr = i<<12;
 		}
-	} else if (mflags & MEM_PRIVATE) { 	// On veut allouer des pages privées
-		for (i = 0; i < pagesNb; i++) { // On alloue les pages
-			
+		//Mapper les deux adresses.
+		for (c=0;c<pagesNb;c++)
+		{
+			globalpages[(logaddr>>12)+c] = (physaddr+(c<<12)) | flags | PAGE_GLOBAL;
 		}
 	}
 
-	if (mflags & MEM_OUTPHYSICAL) { // On demande à connaître l'adresse physique de la première page
-		int64 *addr = (int64 *) _physAddr;
-		*addr = outPhys;
+	//Enregistrer la nouvelle page en RAM.
+	rampages[physaddr>>12] = pid;
+
+	if (mflags & MEM_OUTPHYSICAL) {
+		int64 *addr = (int64 *) physicaladdr;
+		*addr = physaddr;
 	}
-	
-	return outVirt; // Retourne l'adresse virtuelle de la première page
+
+	return (void *) logaddr;
 }
 
 // Fonction qui permet la création d'un enregistrement en GDT

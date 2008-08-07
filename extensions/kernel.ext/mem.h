@@ -79,9 +79,10 @@ typedef struct {
 #define MEM_PUBLIC		0x00000040
 #define MEM_PRIVATE		0x00000080
 #define MEM_OUTPHYSICAL		0x00000100
+#define MEM_PHYSICALADDR	0x00000200
 
 // Prototypes
-int64 	VirtualAlloc 		(int64 _physAddr, unsigned int pagesNb, int mflags, int pid);
+void 	*VirtualAlloc 		(int64 physicaladdr, unsigned int pagesNb, int mflags, int pid);
 void	VirtualFree		(int64 virtAddr, unsigned int pagesNb, char publicMem);
 void 	memcopy			(char *dst, char *src, int n);
 void 	CreateSegment		(int index, int16 flags);

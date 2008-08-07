@@ -90,40 +90,27 @@ void print(const char *str) {
 
 // Fonction CreatePublicTable qui pagine la mémoire publique
 void CreatePublicTable () {
-	int i; // Itérateur
-	int16 *ramPages = (int16 *) (0x400000 - 0x20000);		// Adresse des enregistrements de page RAM
+	int i = 0;
+	int64 *PLM4E = (int64 *) (0x50000-0x20000);
+	int64 *PDPE = (int64 *) (0x51000-0x20000);
+	int64 *PDE = (int64 *) (0x200000-0x20000);
+	int64 *PTE = (int64 *) (0x201000-0x20000);
 
-	int64 *PML4E 	= (int64 *) (0x50000 - 0x20000); 		// PML4E
-	int64 *PDPE 	= (int64 *) (0x51000 - 0x20000);		// PDPE
-	int64 *PDE 	= (int64 *) (0x52000 - 0x20000);		// PDE
-	int64 *PTE 	= (int64 *) (0x200000 - 0x20000);		// PTE
+	*PLM4E = 0x51000 + PAGE_PRESENT + PAGE_WRITE;
 
-	// Un seul PML4E qui pointe sur le seul PDPE
-	*PML4E = (0x51000 + PAGE_PRESENT + PAGE_WRITE + PAGE_NOTFULL) | ((int64) 1 << 52);
+	*PDPE = 0x200000 + PAGE_PRESENT + PAGE_WRITE;
 
-	// Un seul PDPE qui pointe sur le début de la table des PDE
-	*PDPE = (0x52000 + PAGE_PRESENT + PAGE_WRITE + PAGE_NOTFULL) | ((int64) 5 << 52);
-
-	// Création des PDE
-	for (i = 0; i < 5; i++) {
-		if (i == 4) { // Si on est à la page 4, on inscrit que seulement 256 pages sont allouées
-			PDE [i] = (0x200000 + i * 0x1000 + PAGE_PRESENT + PAGE_WRITE + PAGE_NOTFULL) | ((int64) 256 << 52);
-		} else {
-			PDE [i] = (0x200000 + i * 0x1000 + PAGE_PRESENT + PAGE_WRITE) | ((int64) 512 << 52);
-		}
-	}
-	for (i = 5; i < 512; i++) {
-		PDE [i] = 0x200000 + i * 0x1000 + PAGE_PRESENT + PAGE_WRITE;
+	//Création des PDE, pointant chacune sur une PTE
+	for(; i < 511; i++)
+	{
+		PDE[i] = 0x201000 + (i * 0x1000) + PAGE_PRESENT + PAGE_WRITE;
 	}
 
-	// Création des PTE pour contenir la mémoire de l'offset 0 à l'offset 0x900000
-	for (i = 0; i < 0x900; i++) {
-		PTE [i] = i * 0x1000 + PAGE_PRESENT + PAGE_WRITE;
+	//Mappage des pages principale, ça crée en même temps les PTE
+	for (i=1; i<0x900; i++)
+	{
+		PTE[i] = (i * 0x1000) + PAGE_PRESENT + PAGE_WRITE;
 	}
-
-	// Détermine la fin de la RAM
-	// Pas encore fait, fixée pour l'instant à 268 435 456 octets
-	ramPages [65535] = 0xFFFF;
 }
 
 // Fonction FindDevice qui se charge de détecter quel disque est actuellement utilisé par Logram

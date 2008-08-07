@@ -114,7 +114,7 @@ void LoadDrivers()
 // Paramètres : - int64 block 	: bloc du dossier du driver
 //		- lchar *drv	: nom du driver
 //		-  void *nxtDrv : driver suivant
-void	*LoadDriver	(int64 block, lchar *drv, void *nxtDrv)
+void	*LoadDriver	(int64 block, lchar *drv, void *prevDrv)
 {
 	int64	dblock;		//bloc du fichier du pilote
 	void	*buf;		//Adresse du buffer temporaire où charger la première page du pilote
@@ -167,10 +167,10 @@ void	*LoadDriver	(int64 block, lchar *drv, void *nxtDrv)
 	{
 		//Le chargement s'est bien passé, on lie le pilote au pilote précédant
 		kstate(1);
-		if (nxtDrv)
+		if (prevDrv)
 		{
-			nxtdrv = (void **) ExtFind((void *) buf, L"NextDriver");
-			*nxtdrv = nxtDrv;
+			nxtdrv = (void **) ExtFind((void *) prevDrv, L"NextDriver");
+			*nxtdrv = (void *) buf;
 		}
 	}
 	else
