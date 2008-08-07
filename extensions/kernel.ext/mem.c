@@ -48,7 +48,7 @@ void memcopy (char *dst, char *src, int n)
 //		- int mflags 		: flags de la fonction
 //		- int pid 		: id du processus qui mappe la page (1 si kernel)
 void *VirtualAlloc (int64 physicaladdr, unsigned int pagesNb, int mflags, int pid) {
-	int64	physaddr, logaddr, flags, i, _logaddr, c;
+	int64	physaddr, logaddr, flags, i, _logaddr, c, contpages;
 	int64	*globalpages = (int64 *) 0x201000;
 	int16	*rampages = (int16 *) 0x400000;	
 
@@ -65,51 +65,68 @@ void *VirtualAlloc (int64 physicaladdr, unsigned int pagesNb, int mflags, int pi
 		//On veut allouer une page globale
 		
 		//Nous sommes dans l'espace publique, il suffit de trouver un enregistrement à 0
-		i = 0x902;	//On saute les premières pages utilisées par le noyau, ne pas modifier.			
-		while (globalpages[i]) 
-		{
-			//passer à la page suivante, celle-ci est prise
-			i++;
-		}
-
-		//Nous en avons une à 0.
-		logaddr = i<<12;
-
-		if (mflags & MEM_PHYSICALADDR) 
-		{
-			//L'adresse physique voulue est donnée
-			physaddr = physicaladdr;
-		} 
-		else 
-		{
-			//Il va falloir en trouver une
-			//Il suffit d'explorer les pages physiques. Il faut faire attention à ne pas dépasser la fin de la RAM
-			i = 0x902;
-			while (rampages[i]) 
+		i = 0x902;	//On saute les premières pages utilisées par le noyau, ne pas modifier.
+		contpages = 0;	//Compteur de pages contigues
+		while (1)
+		{	
+			//On vérifie si la page est à 0
+			if (!globalpages[i])
 			{
-				//Passer à la page suivante
-				i++;
-				//On est peut-être à la fin de la RAM, on avait vérifié la dernière page
-				if (rampages[i] == 0xFFFF) 
-				{
-					//Décharger une page
-				}
+				//Si oui, on a trouvé une page contigue
+				contpages++;
+				
+				//Si on a suffisamment de pages, on quitte
+				if (contpages == pagesNb) break;
 			}
-
-			physaddr = i<<12;
+			else
+			{
+				//Elle est remplie, on brise le bloc
+				contpages = 0;
+			}
+			
+			i++;
+			
 		}
-		//Mapper les deux adresses.
+
+		//La première page libre est le numéro courrant de pages (i) - le nombre de pages + 1
+		logaddr = (i-pagesNb+1)<<12;
+		
+		//Allouer les pages physiques
 		for (c=0;c<pagesNb;c++)
 		{
-			globalpages[(logaddr>>12)+c] = (physaddr+(c<<12)) | flags | PAGE_GLOBAL;
+			if (mflags & MEM_PHYSICALADDR) 
+			{
+				//L'adresse physique voulue est donnée
+				physaddr = physicaladdr+(c*4096);
+			} 
+			else 
+			{
+				//Il va falloir en trouver une
+				//Il suffit d'explorer les pages physiques.
+				i = 0x902;
+				while (rampages[i]) 
+				{
+					//Passer à la page suivante
+					i++;
+					//On est peut-être à la fin de la RAM, on avait vérifié la dernière page
+					if (rampages[i] == 0xFFFF) 
+					{
+						//Décharger une page
+					}
+				}
+	
+				physaddr = i<<12;
+			}
+			//Mapper les deux adresses.
+			globalpages[(logaddr>>12)+c] = physaddr | flags | PAGE_GLOBAL;
+			//On enregistre la page en RAM
+			rampages[physaddr>>12] = pid;
 		}
 	}
 
-	//Enregistrer la nouvelle page en RAM.
-	rampages[physaddr>>12] = pid;
-
 	if (mflags & MEM_OUTPHYSICAL) {
-		int64 *addr = (int64 *) physicaladdr;
+		//On renvoie l'adresse de la dernière page trouvée, car quand on demande l'adresse d'une page, c'est qu'on en a alloué qu'une seule.
+		int64 *addr = (int64 *) physaddr;
 		*addr = physaddr;
 	}
 
