@@ -110,7 +110,6 @@ void Test ()
 	int i;
 	
 	//On va tester les threads :D. Pour cela, créer 4 threads, qui vont exécuter le même code, mais avec une pile différente (et une variable globale pour la synchro)
-
 	for (i=0;i<4;i++)
 	{
 		TSS	*pThread;		//Thread créé

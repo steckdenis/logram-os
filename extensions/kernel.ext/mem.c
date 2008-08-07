@@ -65,7 +65,7 @@ void *VirtualAlloc (int64 physicaladdr, unsigned int pagesNb, int mflags, int pi
 		//On veut allouer une page globale
 		
 		//Nous sommes dans l'espace publique, il suffit de trouver un enregistrement à 0
-		i = 0x902;	//On saute les premières pages utilisées par le noyau, ne pas modifier.
+		i = 0x900;	//On saute les premières pages utilisées par le noyau, ne pas modifier.
 		contpages = 0;	//Compteur de pages contigues
 		while (1)
 		{	
@@ -103,7 +103,7 @@ void *VirtualAlloc (int64 physicaladdr, unsigned int pagesNb, int mflags, int pi
 			{
 				//Il va falloir en trouver une
 				//Il suffit d'explorer les pages physiques.
-				i = 0x902;
+				i = 0x900;
 				while (rampages[i]) 
 				{
 					//Passer à la page suivante
@@ -210,8 +210,16 @@ void	*GetTSSBaseAddr(int16 desc)
 //		- unsigned int pagesNb 	: nombre de page à libérer
 //		- char publicMem	: mémoire publique ou privée (1 pour publique, 0 pour privée)
 void VirtualFree (int64 virtAddr, unsigned int pagesNb, char publicMem) {
+	int64	*globalpages 	= (int64 *) 0x201000;	// PTE de la mémoire publique
+	int16	*rampages 	= (int16 *) 0x400000;	// Table des enregistrements de pages RAM
+	int 	i;					// Itérateur
+
 	if (publicMem) { // Si c'est de la mémoire publique
-	
+		for (i = 0; i < pagesNb; i++)
+		{
+			globalpages [((virtAddr >> 12) & 0x3FFFF) + i] = 0;
+			rampages [((virtAddr >> 12) & 0x3FFFF) + i] = 0;
+		}
 	} else { // Si c'est de la mémoire privée
 	
 	}

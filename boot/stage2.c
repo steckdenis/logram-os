@@ -101,13 +101,13 @@ void CreatePublicTable () {
 	*PDPE = 0x200000 + PAGE_PRESENT + PAGE_WRITE;
 
 	//Création des PDE, pointant chacune sur une PTE
-	for(; i < 511; i++)
+	for(; i < 512; i++)
 	{
 		PDE[i] = 0x201000 + (i * 0x1000) + PAGE_PRESENT + PAGE_WRITE;
 	}
 
 	//Mappage des pages principale, ça crée en même temps les PTE
-	for (i=1; i<0x900; i++)
+	for (i=0; i<0x900; i++)
 	{
 		PTE[i] = (i * 0x1000) + PAGE_PRESENT + PAGE_WRITE;
 	}
