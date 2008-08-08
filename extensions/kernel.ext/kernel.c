@@ -96,6 +96,7 @@ void InitKernel () {
 	
 	//Charger les drivers
 	kprintf ("Loading drivers...", 0x0F);
+	asm("sti");
 	LoadDrivers();
 	kprintf ("Done.", 0x0F);
 	
@@ -122,9 +123,14 @@ void Test ()
 		
 		pThread = (TSS *) _CreateThread(&test_thread, (void *) 0x50000, (void *) 0x90000+(i*0x4000), (void *) 0x80000+(i*0x4000), rflags, 1, 0, 0); // Les (i*0x4000) sont là pour éviter que tous ces threads aient la même pile.
 		
-		CreateSysSegment(6+(i*2), (int64) pThread, 4096, 0x0089); //i*2 car un segment système fait 2 segments normaux
+		CreateSysSegment(8+(i*2), (int64) pThread, 4096, 0x0089); //i*2 car un segment système fait 2 segments normaux
 	
-		pThread->tr = (6+(i*2))<<3;
+		pThread->tr = ((8+(i*2))<<3);
+		
+		//Thread en ring 3
+		pThread->cs = 32+0;	
+		pThread->ss = 40+0;	//+3 car en ring 3, voir la doc ;-)
+		pThread->ds = 40+0;
 	}
 	while (1) 
 	{
@@ -147,8 +153,10 @@ void MakeGDT () {
 	// Crée les enregistrements
 	CreateSegment(0, 0);		// Segment nul obligatoire
 	CreateSegment(1, 0xC09E);	// Segment 32 bits pour les applications Windows
-	CreateSegment(2, 0x209C);	// Code 64 bits
-	CreateSegment(3, 0x92);		// Segment de données
+	CreateSegment(2, 0x209C);	// Segment Code 64 bits DPL0
+	CreateSegment(3, 0x92);		// Segment de données DPL0
+	CreateSegment(4, 0x20FC);	// Segment Code 64 bits DPL3
+	CreateSegment(5, 0xF2);		// Segment de données DPL3
 
 	// Et enfin, charge la nouvelle GDT
 	LoadGDT ();

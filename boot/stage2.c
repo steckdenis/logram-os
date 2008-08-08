@@ -96,20 +96,20 @@ void CreatePublicTable () {
 	int64 *PDE = (int64 *) (0x200000-0x20000);
 	int64 *PTE = (int64 *) (0x201000-0x20000);
 
-	*PLM4E = 0x51000 + PAGE_PRESENT + PAGE_WRITE;
+	*PLM4E = 0x51000 + PAGE_PRESENT + PAGE_WRITE + PAGE_USER;
 
-	*PDPE = 0x200000 + PAGE_PRESENT + PAGE_WRITE;
+	*PDPE = 0x200000 + PAGE_PRESENT + PAGE_WRITE + PAGE_USER;
 
 	//Création des PDE, pointant chacune sur une PTE
 	for(; i < 512; i++)
 	{
-		PDE[i] = 0x201000 + (i * 0x1000) + PAGE_PRESENT + PAGE_WRITE;
+		PDE[i] = 0x201000 + (i * 0x1000) + PAGE_PRESENT + PAGE_WRITE + PAGE_USER;
 	}
 
 	//Mappage des pages principale, ça crée en même temps les PTE
 	for (i=0; i<0x900; i++)
 	{
-		PTE[i] = (i * 0x1000) + PAGE_PRESENT + PAGE_WRITE;
+		PTE[i] = (i * 0x1000) + PAGE_PRESENT + PAGE_WRITE + PAGE_USER;
 	}
 }
 

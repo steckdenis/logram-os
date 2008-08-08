@@ -49,25 +49,25 @@ void MakeIDT () {
 	InitPIC();
 
 	// Exceptions
-	CreateIDTSegment (0, 0x10, (int64) &int_0, 0x8E00);
-	CreateIDTSegment (1, 0x10, (int64) &int_1, 0x8E00);
-	CreateIDTSegment (2, 0x10, (int64) &int_2, 0x8E00);
-	CreateIDTSegment (3, 0x10, (int64) &int_3, 0x8E00);
-	CreateIDTSegment (4, 0x10, (int64) &int_4, 0x8E00);
-	CreateIDTSegment (5, 0x10, (int64) &int_5, 0x8E00);
-	CreateIDTSegment (6, 0x10, (int64) &int_6, 0x8E00);
-	CreateIDTSegment (7, 0x10, (int64) &int_7, 0x8E00);
-	CreateIDTSegment (8, 0x10, (int64) &int_8, 0x8E00);
-	CreateIDTSegment (10, 0x10, (int64) &int_10, 0x8E00);
-	CreateIDTSegment (11, 0x10, (int64) &int_11, 0x8E00);
-	CreateIDTSegment (12, 0x10, (int64) &int_12, 0x8E00);
-	CreateIDTSegment (13, 0x10, (int64) &int_13, 0x8E00);
-	CreateIDTSegment (14, 0x10, (int64) &int_14, 0x8E00);
-	CreateIDTSegment (16, 0x10, (int64) &int_16, 0x8E00);
-	CreateIDTSegment (17, 0x10, (int64) &int_17, 0x8E00);
-	CreateIDTSegment (18, 0x10, (int64) &int_18, 0x8E00);
-	CreateIDTSegment (19, 0x10, (int64) &int_19, 0x8E00);
-	CreateIDTSegment (30, 0x10, (int64) &int_30, 0x8E00);
+	CreateIDTSegment (0, 0x10, (int64) &int_0, 0xEE00);
+	CreateIDTSegment (1, 0x10, (int64) &int_1, 0xEE00);
+	CreateIDTSegment (2, 0x10, (int64) &int_2, 0xEE00);
+	CreateIDTSegment (3, 0x10, (int64) &int_3, 0xEE00);
+	CreateIDTSegment (4, 0x10, (int64) &int_4, 0xEE00);
+	CreateIDTSegment (5, 0x10, (int64) &int_5, 0xEE00);
+	CreateIDTSegment (6, 0x10, (int64) &int_6, 0xEE00);
+	CreateIDTSegment (7, 0x10, (int64) &int_7, 0xEE00);
+	CreateIDTSegment (8, 0x10, (int64) &int_8, 0xEE00);
+	CreateIDTSegment (10, 0x10, (int64) &int_10, 0xEE00);
+	CreateIDTSegment (11, 0x10, (int64) &int_11, 0xEE00);
+	CreateIDTSegment (12, 0x10, (int64) &int_12, 0xEE00);
+	CreateIDTSegment (13, 0x10, (int64) &int_13, 0xEE00);
+	CreateIDTSegment (14, 0x10, (int64) &int_14, 0xEE00);
+	CreateIDTSegment (16, 0x10, (int64) &int_16, 0xEE00);
+	CreateIDTSegment (17, 0x10, (int64) &int_17, 0xEE00);
+	CreateIDTSegment (18, 0x10, (int64) &int_18, 0xEE00);
+	CreateIDTSegment (19, 0x10, (int64) &int_19, 0xEE00);
+	CreateIDTSegment (30, 0x10, (int64) &int_30, 0xEE00); 
 
 	// IRQ
 	RequestIRQ (0, &int_32); // Horloge
@@ -302,7 +302,7 @@ void int_sx() {
 }
 
 //Interruption #NMI
-void int_clock() {
+void int_nmi() {
 	kprintf("Exception #NMI (2)", 0x04);
 	kprintf("Unending loop", 0x04);
 	for (;;);

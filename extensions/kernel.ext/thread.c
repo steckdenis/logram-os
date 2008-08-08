@@ -51,12 +51,12 @@ void ThreadInit()
 	: "=m" (rflags));
 	pThread = (TSS *) _CreateThread(0, (void *) 0x50000, (void *) 0x90000, (void *) 0x80000, rflags, 1, 0, 0); //Pas besoin de start_thread, puisqu'à la prochaine NMI, il se fait archiver
 	
-	CreateSysSegment(4, (int64) pThread, 4096, 0x0089);
+	CreateSysSegment(6, (int64) pThread, 4096, 0x0089); //0x89
 	
-	pThread->tr = 32;
+	pThread->tr = 48;	//+3 car en ring3, voir la doc ;-)
 	
 	//Passer à ce thread
-	short content = 32;
+	short content = 48;
 	asm ("ltr (%0)" :: "a"(&content));
 	
 	//Sauter dedans
@@ -67,6 +67,7 @@ void ThreadInit()
 typedef struct
 {
 	int64	_rflags;
+	int64	ds;
 	int64	r15;
 	int64	r14;
 	int64	r13;
@@ -90,8 +91,8 @@ typedef struct
 	int64	ss;
 } stackframe;
 
-//Exception #NMI, on commute les threads
-void int_nmi() {
+//IRQ0, on commute les threads
+void int_clock() {
 	stackframe *st;		//Stackframe donné par l'interruption (voir interruptss.s)
 	TSS	*prevThread;	//TSS du thread qui vient de perdre la main
 	TSS	*nextThread;	//TSS du thread qui va avoir la main
@@ -121,6 +122,7 @@ void int_nmi() {
 	
 	//On archive le thread courrant
 	prevThread->ss = st->ss;
+	prevThread->ds = st->ds;
 	prevThread->rsp = st->rsp;
 	prevThread->rflags = st->rflags;
 	prevThread->cs = st->cs;
@@ -167,6 +169,7 @@ void int_nmi() {
 	
 	//On restaures les autres registres
 	st->ss = nextThread->ss;
+	st->ds = nextThread->ds;
 	st->rsp = nextThread->rsp;
 	st->rflags = nextThread->rflags;
 	st->cs = nextThread->cs;
@@ -187,7 +190,7 @@ void int_nmi() {
 	st->r13 = nextThread->r13;
 	st->r14 = nextThread->r14;
 	st->r15 = nextThread->r15;
-	cr3 = 0x50000; //nextThread->cr3;
+	cr3 = nextThread->cr3;
 	
 	//On récupère aussi le cr0
 
@@ -195,7 +198,7 @@ void int_nmi() {
 	:: "a" (cr3));
 	
 	//On change le registre TR
-	short content = nextThread->tr;
+	short content = nextThread->tr + 0;
 	asm ("ltr (%0)" :: "a"(&content));
 
 	/*

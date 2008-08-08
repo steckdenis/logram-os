@@ -93,11 +93,16 @@ extern firstThread
 		push r13
 		push r14
 		push r15
+		xor rax, rax
+		mov ax, ds
+		push rax
 		pushfq
 %endmacro
 
 %macro POPALL	0
 		popfq
+		pop rax
+		mov ds, ax
 		pop r15
 		pop r14
 		pop r13
@@ -135,7 +140,7 @@ int_32:
 	cli
 	PUSHALL
 	mov rax, rsp 	;on met dans rax l'adresse de la structure qui contient les push
-	call int_nmi	;et on appelle int_nmi
+	call int_clock	;et on appelle int_nmi
 	POPALL
 	sti
 iretq
@@ -191,7 +196,7 @@ int_7:
 
 int_8:
 	PUSHALL
-	mov qword rdi, [rsp + 136]
+	mov qword rdi, [rsp + 144]
 	call int_df
 	POPALL
 	add rsp, 8
@@ -199,7 +204,7 @@ int_8:
 
 int_10:
 	PUSHALL
-	mov qword rdi, [rsp + 136]
+	mov qword rdi, [rsp + 144]
 	call int_ts
 	POPALL
 	add rsp, 8
@@ -207,7 +212,7 @@ int_10:
 
 int_11:
 	PUSHALL
-	mov qword rdi, [rsp + 136]
+	mov qword rdi, [rsp + 144]
 	call int_np
 	POPALL
 	add rsp, 8
@@ -215,7 +220,7 @@ int_11:
 
 int_12:
 	PUSHALL
-	mov qword rdi, [rsp + 136]
+	mov qword rdi, [rsp + 144]
 	call int_ss
 	POPALL
 	add rsp, 8
@@ -223,7 +228,7 @@ int_12:
 
 int_13:
 	PUSHALL
-	mov qword rdi, [rsp + 136]
+	mov qword rdi, [rsp + 144]
 	call int_gp
 	POPALL
 	add rsp, 8
@@ -231,7 +236,7 @@ int_13:
 
 int_14:
 	PUSHALL
-	mov qword rdi, [rsp + 136]
+	mov qword rdi, [rsp + 144]
 	call int_pf
 	POPALL
 	add rsp, 8
@@ -245,7 +250,7 @@ int_16:
 
 int_17:
 	PUSHALL
-	mov qword rdi, [rsp + 136]
+	mov qword rdi, [rsp + 144]
 	call int_ac
 	POPALL
 	add rsp, 8
@@ -271,7 +276,7 @@ int_30:
 
 int_2:
 	PUSHALL
-	call int_clock
+	call int_nmi
 	POPALL
 	iretq
 
