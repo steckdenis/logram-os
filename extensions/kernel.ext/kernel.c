@@ -83,6 +83,15 @@ void InitKernel () {
 	kprintf ("Initializing kernel...", 0x06);
 	kprintf ("", 0x07);
 
+	asm("cli");
+	
+	//Effacer le contenu du tableau des pages en RAM
+	asm(	"mov $0x400000, %rsi\n"
+		"mov %rsi, %rdi\n"
+		"mov $0x80000, %rcx\n"
+		"xor %rax, %rax\n"
+		"rep stosq");
+	
 	// Créer et charger la GDT
 	MakeGDT ();
 	// Créer et charger l'IDT (donc activer les interruptions)
@@ -106,11 +115,13 @@ void InitKernel () {
 
 // Fonction Test qui contiendra tous les tests du système
 void	test_thread();
+int64 semaphore = 0;
 void Test () 
 {
 	int i;
 	
 	//On va tester les threads :D. Pour cela, créer 4 threads, qui vont exécuter le même code, mais avec une pile différente (et une variable globale pour la synchro)
+	asm("cli");
 	for (i=0;i<4;i++)
 	{
 		TSS	*pThread;		//Thread créé
@@ -121,6 +132,8 @@ void Test ()
 			"popq %0"
 		: "=m" (rflags));
 		
+		//rflags = rflags | 0x200; //Ca ne marche pas encore :(
+		
 		pThread = (TSS *) _CreateThread(&test_thread, (void *) 0x50000, (void *) 0x90000+(i*0x4000), (void *) 0x80000+(i*0x4000), rflags, 1, 0, 0); // Les (i*0x4000) sont là pour éviter que tous ces threads aient la même pile.
 		
 		CreateSysSegment(8+(i*2), (int64) pThread, 4096, 0x0089); //i*2 car un segment système fait 2 segments normaux
@@ -128,23 +141,30 @@ void Test ()
 		pThread->tr = ((8+(i*2))<<3);
 		
 		//Thread en ring 3
-		pThread->cs = 32+0;	
-		pThread->ss = 40+0;	//+3 car en ring 3, voir la doc ;-)
-		pThread->ds = 40+0;
+		pThread->cs = 32+3;	
+		pThread->ss = 40+3;	//+3 car en ring 3, voir la doc ;-)
+		pThread->ds = 40+3;
 	}
-	while (1) 
+	asm("sti");
+
+	char *buf = (char *) (0xB8000+semaphore+1200);
+	semaphore += 4;
+	
+	while (1)
 	{
-		kprintf("Thread 0", 0x02);
-		asm("hlt");
+		*buf = '0';
 	}
 }
 
 void test_thread()
 {
+	char *buf = (char *) (0xB8000+semaphore+1200);
+	semaphore += 4;
+	
+	
 	while (1)
 	{
-		kprintf("Autre thread", 0x09);
-		asm("hlt");
+		*buf = '0';
 	}
 }
 
