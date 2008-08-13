@@ -68,6 +68,13 @@ typedef struct {
 #define		SECTION_BSS	4
 #define		SECTION_STACK	5
 
+/* Macros */
+
+//Calcul de l'adresse d'une chaine en vue de l'importation ou de l'affichage
+//	-__ext = l'adresse de base de l'extension (ext en général)
+//	-__chaine = la chaine (L"machin" ou "machin" pour kprintf)
+#define STRING(__ext, __chaine) (lchar *)(((int64)__chaine)+(int64)(__ext))
+
 /* Prototypes */
 
 /* ExtMain : fonction d'entrée d'une extension

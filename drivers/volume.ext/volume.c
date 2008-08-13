@@ -86,10 +86,20 @@ DEVICE	device =
 
 int ExtMain (void *ext, void *kernAddr, void *efAddr, lint message, lint param)
 {
+	void* (*find)(void *ext, lchar *nom);
+	void (*kprintf)(char *texte, char *code);
 	switch (message)
 	{
 		case EXT_LOAD:
 			//On a chargé l'extension à partir du disque
+			
+			/*find = efAddr;
+			kprintf = find((void *)0x800000, STRING(ext, L"kprintf"));
+			
+			if (kprintf)
+			{
+				kprintf(STRING(ext, "Ca marche !"), 0x02);
+			} */
 			break;
 		case EXT_ATTACH:
 			//On a attaché l'extension à un processus
