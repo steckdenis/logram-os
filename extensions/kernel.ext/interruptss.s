@@ -137,6 +137,10 @@ ptrIDT:
 ; Interruption horloge : commutation des threads
 ;	L'important dans cette fonction, c'est de ne détruire aucun registre, car on a l'équilibre de deux threads sur les bras !
 int_32:
+	mov rax, rax
+	jmp .tst
+	mov rbx, rbx
+	.tst:
 	cli
 	PUSHALL
 	mov rax, rsp 	;on met dans rax l'adresse de la structure qui contient les push

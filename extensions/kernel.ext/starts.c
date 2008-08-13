@@ -65,6 +65,7 @@ exports exps[] =
 		{ &CompareString, L"CompareString"},
 		{ &SplitString, L"SplitString"},
 		{ &SplitNext, L"SplitNext"},
+		{ &VirtualAlloc, L"VirtualAlloc"},
 		
 		{ &FindDriver, L"FindDriver"},
 		{ &FindDriverId, L"FindDriverId"},

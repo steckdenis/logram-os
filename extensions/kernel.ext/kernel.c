@@ -105,7 +105,6 @@ void InitKernel () {
 	
 	//Charger les drivers
 	kprintf ("Loading drivers...", 0x0F);
-	asm("sti");
 	LoadDrivers();
 	kprintf ("Done.", 0x0F);
 	
@@ -132,9 +131,9 @@ void Test ()
 			"popq %0"
 		: "=m" (rflags));
 		
-		//rflags = rflags | 0x200; //Ca ne marche pas encore :(
+		rflags = rflags | 0x200; //Ca ne marche pas encore :(
 		
-		pThread = (TSS *) _CreateThread(&test_thread, (void *) 0x50000, (void *) 0x90000+(i*0x4000), (void *) 0x80000+(i*0x4000), rflags, 1, 0, 0); // Les (i*0x4000) sont là pour éviter que tous ces threads aient la même pile.
+		pThread = (TSS *) _CreateThread(&test_thread, (void *) 0x50000, (void *) 0x94000+(i*0x4000), (void *) 0x84000+(i*0x4000), rflags, 1, 0, 0); // Les (i*0x4000) sont là pour éviter que tous ces threads aient la même pile.
 		
 		CreateSysSegment(8+(i*2), (int64) pThread, 4096, 0x0089); //i*2 car un segment système fait 2 segments normaux
 	
@@ -149,10 +148,13 @@ void Test ()
 
 	char *buf = (char *) (0xB8000+semaphore+1200);
 	semaphore += 4;
+	i = 0;
 	
 	while (1)
 	{
-		*buf = '0';
+		*buf = '0'+i;
+		i++;
+		if (i==10) i=0;
 	}
 }
 
@@ -160,11 +162,14 @@ void test_thread()
 {
 	char *buf = (char *) (0xB8000+semaphore+1200);
 	semaphore += 4;
+	int i;
 	
 	
 	while (1)
 	{
-		*buf = '0';
+		*buf = '0'+i;
+		i++;
+		if (i==10) i=0;
 	}
 }
 
@@ -173,7 +178,7 @@ void MakeGDT () {
 	// Crée les enregistrements
 	CreateSegment(0, 0);		// Segment nul obligatoire
 	CreateSegment(1, 0xC09E);	// Segment 32 bits pour les applications Windows
-	CreateSegment(2, 0x209C);	// Segment Code 64 bits DPL0
+	CreateSegment(2, 0x2098);	// Segment Code 64 bits DPL0 0x209C
 	CreateSegment(3, 0x92);		// Segment de données DPL0
 	CreateSegment(4, 0x20FC);	// Segment Code 64 bits DPL3
 	CreateSegment(5, 0xF2);		// Segment de données DPL3
