@@ -42,14 +42,14 @@ void MakeIDT () {
 
 	// Initialise toutes les interruptions
 	for (i = 0; i < 256; i++) {
-		//CreateIDTSegment (i, 0x10, (int64) &int_default, 0x8E00);
+		CreateIDTSegment (i, 0x10, (int64) &int_default, 0x8E00);
 	}
 
 	// Initialise les PIC
 	InitPIC();
 
 	// Exceptions
-	/*CreateIDTSegment (0, 0x10, (int64) &int_0, 0xEE00);
+	CreateIDTSegment (0, 0x10, (int64) &int_0, 0xEE00);
 	CreateIDTSegment (1, 0x10, (int64) &int_1, 0xEE00);
 	CreateIDTSegment (2, 0x10, (int64) &int_2, 0xEE00);
 	CreateIDTSegment (3, 0x10, (int64) &int_3, 0xEE00);
@@ -67,7 +67,7 @@ void MakeIDT () {
 	CreateIDTSegment (17, 0x10, (int64) &int_17, 0xEE00);
 	CreateIDTSegment (18, 0x10, (int64) &int_18, 0xEE00);
 	CreateIDTSegment (19, 0x10, (int64) &int_19, 0xEE00);
-	CreateIDTSegment (30, 0x10, (int64) &int_30, 0xEE00); */
+	CreateIDTSegment (30, 0x10, (int64) &int_30, 0xEE00); 
 
 	// IRQ
 	RequestIRQ (0, &int_32); // Horloge
