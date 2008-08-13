@@ -70,10 +70,10 @@ typedef struct {
 
 /* Macros */
 
-//Calcul de l'adresse d'une chaine en vue de l'importation ou de l'affichage
+//Calcul de l'adresse d'une variable globale pour usage externe (affichage, import, export, etc)
 //	-__ext = l'adresse de base de l'extension (ext en général)
-//	-__chaine = la chaine (L"machin" ou "machin" pour kprintf)
-#define STRING(__ext, __chaine) (lchar *)(((int64)__chaine)+(int64)(__ext))
+//	-__chaine = l'adresse de la variable à calculer, comme L"teste" ou &foo
+#define STRING(__ext, __chaine) (void *)(((int64)__chaine)+(int64)(__ext))
 
 /* Prototypes */
 
