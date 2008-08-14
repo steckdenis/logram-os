@@ -119,6 +119,18 @@ void Test ()
 {
 	int i;
 	
+	//Tester la lecture sur un disque dur
+	void *Volume;
+	void (*readVol)(int vol, int part, int64 block, void *buf);
+	
+	Volume = (void *) FindDriver(L"VOLUME");
+	readVol = ExtFind(Volume, L"ReadVolume");
+	
+	kprintf("Voici le contenu du secteur 0 de la 1ere partition :", 0x09);
+	
+	//Lire en mémoire vidéo le secteur d'infos FSL (le 0 de la partition 0)
+	readVol(0, 0, 0, (void *) 0xB8000+(16*160));
+	
 	//On va tester les threads :D. Pour cela, créer 4 threads, qui vont exécuter le même code, mais avec une pile différente (et une variable globale pour la synchro)
 	asm("cli");
 	for (i=0;i<4;i++)

@@ -41,6 +41,12 @@ section sections[];
 void	*nxtDrv;
 DEVICE	device;
 
+//Prototypes
+
+void	DetectDrives(void *ext);
+
+//En-tête
+
 resext head = 
 	{
 		sizeof(resext),
@@ -76,13 +82,35 @@ DEVICE	device =
 		{ L'I', L'D', L'E', 0, 0, 0, 0, 0 }
 	};
 	
+/* Importations */
+
+void*	(*FindDriver)	(lchar *nom);
+void*	(*ExtFind)	(void *ext, lchar *nom);
+void	(*kprintf)	(char *str, char attr);
+
+void	(*addVol)	(void *ReadBlock, void *WriteBlock, int device);
+
+/* Variables globales */
+
+void	*Volume = (void *) 0;	//Adresse de volume.ext
+	
 // Fonction principale de l'extension
 int ExtMain (void *ext, void *kernAddr, void *efAddr, lint message, lint param)
 {
 	switch (message)
 	{
 		case EXT_LOAD:
-			//On a chargé l'extension à partir du disque
+			//Détecter les disques et les enregistrer dans volume.ext
+			ExtFind = efAddr;
+			FindDriver = ExtFind(kernAddr, STRING(ext, L"FindDriver"));
+			kprintf = ExtFind(kernAddr, STRING(ext, L"kprintf"));
+			
+			Volume = FindDriver(STRING(ext, L"VOLUME"));
+			
+			addVol = ExtFind(Volume, STRING(ext, L"AddVolume"));
+			
+			//Détecter les disques
+			DetectDrives(ext);
 			break;
 		case EXT_ATTACH:
 			//On a attaché l'extension à un processus
@@ -95,6 +123,87 @@ int ExtMain (void *ext, void *kernAddr, void *efAddr, lint message, lint param)
 			break;
 	}
 	return 1;
+}
+
+void	DetectDrives(void *ext)
+{
+	int i, j, portControl, port;
+	unsigned char a, b, byte1, byte2, status;
+	
+	// Tester les ports IDE
+	for (i = 0; i < 4; i++) 
+	{
+		a = 0;
+		b = 0;
+		
+		// Déterminer quel port sera utilisé pour cette itération
+		if (i == 0) { port = 0x1F0; portControl = 0x3F0; }
+		if (i == 1) { port = 0x170; portControl = 0x370; }
+		if (i == 2) { port = 0xF0; portControl = 0x2F0; }
+		if (i == 3) { port = 0x70; portControl = 0x270; }
+
+		// Regarde si le contrôleur est présent
+		char byte1 = inb (port + 6);
+		char byte2 = (byte1 & 0x10) >> 4;
+		if(byte2 == 0) 
+		{
+			byte1 |= 0x10;
+			outb(port + 6, byte1);
+		} 
+		else 
+		{
+			byte1 = byte1 & 0xEF;
+			outb(port + 6, byte1);
+		}
+		byte1 = inb(port + 6);
+		byte1 = (byte1 & 0x10) >> 4;
+		if(byte1 != byte2) 
+		{ 
+			//Le contrôleur existe
+			
+			//Voir si le disque maitre existe
+			outb(port + 6, 0xa0);	//Master
+			outb(port + 7, 0xec); 	//Commande d'indentification
+			for (j = 0; j < 30000; j++)
+			{
+				status = inb(port + ATA_STATUS);
+				if(!(status & ATA_S_BSY))
+				{
+					//Le disque existe, l'ajouter
+					for (j=0;j<256;j++) inw(port + ATA_DATA); //On ne s'en sert pas
+						
+					//On ajoute
+					addVol(STRING(ext, &ReadBlock), STRING(ext, &WriteBlock), i*2);
+					
+					goto disksuiv;
+				}
+				iowait();
+			}
+			
+			disksuiv:
+			
+			//Voir si le disque esclave existe
+			outb(port + 6, 0xb0);	//Master
+			outb(port + 7, 0xec); 	//Commande d'indentification
+			for (j = 0; j < 30000; j++)
+			{
+				status = inb(port + ATA_STATUS);
+				if(!(status & ATA_S_BSY))
+				{
+					//Le disque existe, l'ajouter
+					for (j=0;j<256;j++) inw(port + ATA_DATA); //On ne s'en sert pas
+						
+					//On ajoute
+					addVol(STRING(ext, &ReadBlock), STRING(ext, &WriteBlock), (i*2)+1);
+					
+					goto finverif;
+				}
+				iowait();
+			}
+			
+			finverif: ;
+		} 
+	}
 }
 
 // Fonction ReadBlock qui permet la lecture d'un secteur sur le disque

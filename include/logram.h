@@ -53,7 +53,7 @@ typedef struct {
 	section	*sections;	//Sections de l'application
 } resexe;
 
-/* Constantes */
+/* Constantes pour les extensions */
 
 #define		MAGIC_EXT	0x4F56A2E4DE89AF0C //Code pris au hasard sans signification
 
@@ -67,6 +67,19 @@ typedef struct {
 #define		SECTION_RODATA	3
 #define		SECTION_BSS	4
 #define		SECTION_STACK	5
+
+/* Constantes pour la gestion de la mémoire */
+
+#define MEM_NOTCACHEABLE	0x00000001
+#define MEM_WRITETHROUGH	0x00000002
+#define MEM_NX			0x00000004
+#define MEM_READONLY		0x00000008
+#define MEM_PROTECTED		0x00000010
+#define MEM_NOTPAGEABLE		0x00000020
+#define MEM_PUBLIC		0x00000040
+#define MEM_PRIVATE		0x00000080
+#define MEM_OUTPHYSICAL		0x00000100
+#define MEM_PHYSICALADDR	0x00000200
 
 /* Macros */
 
