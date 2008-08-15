@@ -150,7 +150,7 @@ void	*LoadDriver	(int64 block, lchar *drv, void *prevDrv)
 	
 	//On alloue les pages
 	drvSize -= 4096;	//On a déjà la première page ;-)
-	int64 bug = VirtualAlloc(0, drvSize/4096, MEM_PUBLIC, 1); //On alloue (pas besoin de l'adresse de retour, on alloue juste après *buf). Il faut récupérer le résultat, sinon Logram plante (je ne sais pas pourquoi, il entre en boucle infinie quelque part)
+	int64 bug = (int64) VirtualAlloc(0, drvSize/4096, MEM_PUBLIC, 1); //On alloue (pas besoin de l'adresse de retour, on alloue juste après *buf). Il faut récupérer le résultat, sinon Logram plante (je ne sais pas pourquoi, il entre en boucle infinie quelque part)
 
 	//On charge le pilote (drvSize/512)
 	FSL_Read(dblock, (void *) buf, drvSize/512);	//Et on charge (on écrase buf, mais ce n'est rien, car c'est la page qui nous manque :-)

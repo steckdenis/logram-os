@@ -31,6 +31,8 @@
 #include	"console.h"
 #include	"mem.h"
 #include	"drivers.h"
+#include 	<drivers/fsl_driver.h>		/*Requis par files.h */
+#include 	"file.h"
 
 /* Déclaration des fonctions (ExtMain déclarée dans logram.h) */
 int 	CompareString	(lchar *s1, lchar *s2);
@@ -66,6 +68,8 @@ exports exps[] =
 		{ &SplitString, L"SplitString"},
 		{ &SplitNext, L"SplitNext"},
 		{ &VirtualAlloc, L"VirtualAlloc"},
+		{ &OpenFile, L"OpenFile"},
+		{ &ReadFile, L"ReadFile"},
 		
 		{ &FindDriver, L"FindDriver"},
 		{ &FindDriverId, L"FindDriverId"},

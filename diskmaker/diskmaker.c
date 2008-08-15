@@ -196,8 +196,8 @@ int64 CopyDisk (unsigned char *dirname) {
 		// Remplit la structure de fichier
 		file.attributes 	= 1;					// Fichier normal
 		file.permissions 	= 0;					// On ne peut rien faire, ni lire, ni écrire, ni lister, sauf root, bien entendu (utile pour la sécurité)
-		file.useranddisk 	= 0;					// Root, disque 0
-		file.driverid 		= 0;					// Disque principal
+		file.userandpart 	= 0;					// Root, disque 0
+		file.disk 		= 0;					// Disque principal
 		file.sizebytes 		= 0;					// Fichier de taille dynamique non calculée, il faut compter les blocs pour trouver la taille du fichier
 		file.sizeblocks 	= 0;					// Même chose
 		file.startblock 	= (int64) CopyFile(dirname, filename); 	// Copie le fichier en retournant son adresse de bloc
@@ -229,8 +229,8 @@ int64 CopyDisk (unsigned char *dirname) {
 		// On remplit la structure du fichier
 		file.attributes 	= 2;				// Dossier
 		file.permissions 	= 0;				// On ne peut rien faire, ni lire, ni écrire, ni lister, sauf root, bien entendu (utile pour la sécurité)
-		file.useranddisk 	= 0;				// Root, disque 0
-		file.driverid 		= 0;				// Disque principal
+		file.userandpart 	= 0;				// Root, disque 0
+		file.disk 		= 0;				// Disque principal
 		file.sizebytes 		= 0;				// Fichier de taille dynamique non calculée, il faut compter les blocs pour trouver la taille du fichier
 		file.sizeblocks 	= 0;				// Même chose
 		file.startblock 	= CopyDisk (dircontentsPath); 	// Copie le dossier en retournant son adresse de bloc

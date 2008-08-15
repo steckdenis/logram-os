@@ -130,7 +130,7 @@ void Test ()
 	//On lit le fichier
 	ReadFile(&file, 0, 1, (void *) &mbuf);
 	
-	kprintf(&mbuf, 0x0F);
+	kprintf((char *) &mbuf, 0x0F);
 	
 	//On va tester les threads :D. Pour cela, créer 4 threads, qui vont exécuter le même code, mais avec une pile différente (et une variable globale pour la synchro)
 	asm("cli");

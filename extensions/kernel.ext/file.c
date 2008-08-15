@@ -53,7 +53,7 @@ int	OpenFile(lchar	*mpath, FILE *outfile)
 	{
 		//Ouvrir et importer les fonctions du bon pilote de système de fichier
 		device = FindDriver(outfile->filesystem);
-		D_Open = (void *) ExtFind(device, L"OpenFile");
+		D_Open = (void *) ExtFind((void *) device, L"OpenFile");
 		
 		//Et on ouvre bêtement le fichier
 		if (!D_Open(outfile, mpath)) return 0;	//erreur
@@ -73,7 +73,7 @@ int	ReadFile(FILE *file, int64 start, int64 num, void *buf)
 	
 	//On trouve et importe ce qu'il faut du pilote
 	device = FindDriver(file->filesystem);
-	D_Read = (void *) ExtFind(device, L"ReadFile");
+	D_Read = (void *) ExtFind((void *) device, L"ReadFile");
 	
 	//On lit bêtement le fichier
 	return (D_Read(file, start, num, buf));
