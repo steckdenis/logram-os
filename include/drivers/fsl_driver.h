@@ -52,8 +52,8 @@ typedef struct {
 typedef struct __attribute__((__packed__)) {
 	int16	attributes;
 	int16	permissions;
-	int16	useranddisk;
-	int16	driverid;		//id du driver (16 bits)
+	int16	userandpart;		//Utilisateur et partition (Utilisateur dans le byte haut, partition dans le bas)
+	int16	disk;			//Disque
 	int64	sizebytes;
 	int64	sizeblocks;
 	int64	startblock;

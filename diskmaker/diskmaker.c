@@ -194,7 +194,7 @@ int64 CopyDisk (unsigned char *dirname) {
 		COLOR("0");
 
 		// Remplit la structure de fichier
-		file.attributes 	= 1;					// Fichier normale
+		file.attributes 	= 1;					// Fichier normal
 		file.permissions 	= 0;					// On ne peut rien faire, ni lire, ni écrire, ni lister, sauf root, bien entendu (utile pour la sécurité)
 		file.useranddisk 	= 0;					// Root, disque 0
 		file.driverid 		= 0;					// Disque principal

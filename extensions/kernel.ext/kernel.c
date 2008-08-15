@@ -36,6 +36,8 @@
 #include "interrupts.h"
 #include "drivers.h"
 #include "thread.h"
+#include <drivers/fsl_driver.h>
+#include "file.h"
 
 // Prototypes des fonctions contenues dans l'extension
 int 	CompareString	(lchar *s1, lchar *s2);
@@ -119,17 +121,16 @@ void Test ()
 {
 	int i;
 	
-	//Tester la lecture sur un disque dur
-	void *Volume;
-	void (*readVol)(int vol, int part, int64 block, void *buf);
+	//Tester les fonctions OpenFile et ReadFile
+	FILE file;
+	char *mbuf[512];
 	
-	Volume = (void *) FindDriver(L"VOLUME");
-	readVol = ExtFind(Volume, L"ReadVolume");
+	OpenFile(L"Logram\\sys64\\drivers.lst", &file);
 	
-	kprintf("Voici le contenu du secteur 0 de la 1ere partition :", 0x09);
+	//On lit le fichier
+	ReadFile(&file, 0, 1, (void *) &mbuf);
 	
-	//Lire en mémoire vidéo le secteur d'infos FSL (le 0 de la partition 0)
-	readVol(0, 0, 0, (void *) 0xB8000+(16*160));
+	kprintf(&mbuf, 0x0F);
 	
 	//On va tester les threads :D. Pour cela, créer 4 threads, qui vont exécuter le même code, mais avec une pile différente (et une variable globale pour la synchro)
 	asm("cli");
