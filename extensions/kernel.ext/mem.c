@@ -42,6 +42,13 @@ void memcopy (char *dst, char *src, int n)
 	return;
 }
 
+void zerofill(char *addr, int n)
+{
+	while (n--)
+		*addr++ = 0;
+	return;
+}
+
 // Fonction VirtualAlloc qui permet d'allouer des pages en mémoire (1 page = 4096 octets)
 // Paramètres : - int64 _physAddr 	: adresse physique de la page si on souhaite la spécifier. Mettre à 0 lorsque la fonction doit la choisir. Est une adresse si il y a le flag MEM_OUTPHYSICAL
 //		- unsigned int pagesNb 	: nombre de pages à allouer
@@ -62,8 +69,6 @@ void *VirtualAlloc (int64 physicaladdr, unsigned int pagesNb, int mflags, int pi
 	if (mflags & MEM_NOTPAGEABLE) pid = 1;		//pid des pages qu'on ne peut vider dans le swap
 
 	if (mflags & MEM_PUBLIC) {
-		//On veut allouer une page globale
-		
 		//Nous sommes dans l'espace publique, il suffit de trouver un enregistrement à 0
 		i = 0x900;	//On saute les premières pages utilisées par le noyau, ne pas modifier.
 		contpages = 0;	//Compteur de pages contigues
@@ -74,7 +79,6 @@ void *VirtualAlloc (int64 physicaladdr, unsigned int pagesNb, int mflags, int pi
 			{
 				//Si oui, on a trouvé une page contigue
 				contpages++;
-				
 				//Si on a suffisamment de pages, on quitte
 				if (contpages == pagesNb) break;
 			}
@@ -83,9 +87,7 @@ void *VirtualAlloc (int64 physicaladdr, unsigned int pagesNb, int mflags, int pi
 				//Elle est remplie, on brise le bloc
 				contpages = 0;
 			}
-			
 			i++;
-			
 		}
 
 		//La première page libre est le numéro courrant de pages (i) - le nombre de pages + 1
@@ -122,11 +124,158 @@ void *VirtualAlloc (int64 physicaladdr, unsigned int pagesNb, int mflags, int pi
 			//On enregistre la page en RAM
 			rampages[physaddr>>12] = pid;
 		}
+	} else {
+		//On alloue une page en mémoire privée
+		int64 pPLM4E, nplm4e, npdpe, npde, npte, totpages;
+		int64 *plm4e;
+		int64 *pdpe;
+		int64 *pde;
+		int64 *pte;
+		int64 plm4ef, pdpef, pdef, ptef;
+		
+		totpages = 0;
+		
+		//Récupérer l'adresse de la PLM4E
+		asm(	"mov %%cr3, %0"
+		: "=a" (pPLM4E));
+		pPLM4E = pPLM4E & 0xFFFFFFFFFFFFF000;	//Effacer les bits réservés
+		plm4ef = pPLM4E;
+		
+		//On a une adresse physique, il faut la mapper pour l'utiliser
+		plm4e = (int64 *) VirtualAlloc(plm4ef, 1, MEM_PHYSICALADDR | MEM_PUBLIC, 1);
+		
+		//Explorer les tables jusqu'à trouver assez de pages libres
+		for (nplm4e = 0; nplm4e < 512; nplm4e++)
+		{
+			pdpef = plm4e[nplm4e];
+			if (!pdpef)
+			{
+				pdpe = (int64 *) VirtualAlloc((int64) &pdpef, 1, MEM_PUBLIC | MEM_OUTPHYSICAL, 1);	//Créer une nouvelle pdpe
+				*pdpe = 0;
+				zerofill((char *) pdpe, 4096);
+				plm4e[nplm4e] = (int64) pdpef;
+			}
+			else
+			{
+				pdpe = (int64 *) VirtualAlloc(pdpef, 1, MEM_PHYSICALADDR | MEM_PUBLIC, 1);
+			}
+			
+			for (npdpe = 0; npdpe < 512; npdpe++)
+			{
+				if ((nplm4e == 0) && (npdpe == 0))
+				{
+					//On va prendre la 1ere PDE dans la première PDPE, ça ne va pas (elle est utilisée pour la mémoire publique)
+					break;
+				}
+				
+				pdef = pdpe[npdpe];
+				if (!pdef)
+				{
+					pde = (int64 *) VirtualAlloc((int64) &pdef, 1, MEM_PUBLIC | MEM_OUTPHYSICAL, 1);	//Créer une nouvelle pdpe
+					zerofill((char *) pde, 4096);
+					pdpe[npdpe] = (int64) pdef;
+				}
+				else
+				{
+					pde = (int64 *) VirtualAlloc(pdef, 1, MEM_PHYSICALADDR | MEM_PUBLIC, 1);
+				}
+				
+				for (npde = 0; npde < 512; npde++)
+				{
+					ptef = pde[npde];
+					if (!ptef)
+					{
+						pte = (int64 *) VirtualAlloc((int64) &ptef, 1, MEM_PUBLIC | MEM_OUTPHYSICAL, 1);	//Créer une nouvelle pdpe
+						zerofill((char *) pte, 4096);
+						pde[npde] = (int64) ptef;
+					}
+					else
+					{
+						pte = (int64 *) VirtualAlloc(ptef, 1, MEM_PHYSICALADDR | MEM_PUBLIC, 1);
+					}
+					
+					for (npte = 0; npte < 512; npte++)
+					{
+						if (!pte[npte])
+						{
+							//La page est libre, on incrémente le nombre de pages conigues
+							totpages++;
+							if (totpages == 1)
+							{
+								logaddr = ((nplm4e << 27) | (npdpe << 18) | (npde << 9) | npte); //logaddr n'est pas la vraie adresse, il faut encore faire un << 12
+							}
+							if (totpages == pagesNb) goto pages_ok;
+						}
+						else
+						{
+							totpages = 0;
+						}
+					}
+					//On n'a plus besoin de la PTE
+					VirtualFree((int64) pte, 1, MEM_DONTFREEPHYSICAL);
+				}
+				//On n'a plus besoin de la PDE
+				VirtualFree((int64) pde, 1, MEM_DONTFREEPHYSICAL);
+			}
+			//On n'a plus besoin de la PDPE
+			VirtualFree((int64) pdpe, 1, MEM_DONTFREEPHYSICAL);
+		} 
+pages_ok:	
+		//Réellement mapper les pages (cette fois-ci, ce sera plus court ;-) )
+		for (i=0; i<pagesNb; i++)
+		{
+			//Découper l'adresse virtuelle en numéros de PLM4E, PDPE, PDE et PTE
+			_logaddr = logaddr+i;
+			npte = _logaddr & 0x1FF;
+			npde = (_logaddr >> 9) & 0x1FF;
+			npdpe = (_logaddr >> 18) & 0x1FF;
+			nplm4e = (_logaddr >> 27) & 0x1FF;
+			
+			pdpef = plm4e[nplm4e];
+			pdpe = (int64 *) VirtualAlloc(pdpef, 1, MEM_PHYSICALADDR | MEM_PUBLIC, 1);
+			
+			pdef = pdpe[npdpe];
+			pde = (int64 *) VirtualAlloc(pdef, 1, MEM_PHYSICALADDR | MEM_PUBLIC, 1);
+			
+			ptef = pde[npde];
+			pte = (int64 *) VirtualAlloc(ptef, 1, MEM_PHYSICALADDR | MEM_PUBLIC, 1);
+			
+			//On a la pte, y placer au bon endroit l'adresse physique de la page
+			if (mflags & MEM_PHYSICALADDR) 
+			{
+				//L'adresse physique voulue est donnée
+				physaddr = physicaladdr+(i*4096);
+			} 
+			else 
+			{
+				//Il va falloir en trouver une
+				//Il suffit d'explorer les pages physiques.
+				i = 0x900;
+				while (rampages[i]) 
+				{
+					//Passer à la page suivante
+					i++;
+					//On est peut-être à la fin de la RAM, on avait vérifié la dernière page
+					if (rampages[i] == 0xFFFF) 
+					{
+						//Décharger une page
+					}
+				}
+	
+				physaddr = i<<12;
+			}
+			
+			pte[npte] = (int64) (physaddr | flags);	//La page est mappée
+			rampages[physaddr>>12] = pid;
+		}
+		
+		//On a fini, on adapte juste logaddr et physaddr
+		logaddr <<= 12;
 	}
 
 	if (mflags & MEM_OUTPHYSICAL) {
 		//On renvoie l'adresse de la dernière page trouvée, car quand on demande l'adresse d'une page, c'est qu'on en a alloué qu'une seule.
-		int64 *addr = (int64 *) physaddr;
+		int64 *addr = (int64 *) physicaladdr;
 		*addr = physaddr;
 	}
 
@@ -171,7 +320,7 @@ void CreateSysSegment(int index, int64 baseAddress, int16 limit, int16 flags) {
 // Fonction qui lit les informations d'un segment dans la GDT et les place dans une structure sysrec
 //	-index : n° de segment
 //	-*out:	adresse d'une structure sysrec pour réceptionner les données
-void	ReadSegment		(int index, gdtsysrec *out)
+void ReadSegment(int index, gdtsysrec *out)
 {
 	gdtsysrec	*gdt = (gdtsysrec *) 0x30000;
 
@@ -209,16 +358,19 @@ void	*GetTSSBaseAddr(int16 desc)
 // Paramètres : - int64 virtAddr 	: adresse virtuelle de la première page
 //		- unsigned int pagesNb 	: nombre de page à libérer
 //		- char publicMem	: mémoire publique ou privée (1 pour publique, 0 pour privée)
-void VirtualFree (int64 virtAddr, unsigned int pagesNb, char publicMem) {
+void VirtualFree (int64 virtAddr, unsigned int pagesNb, int mflags) {
 	int64	*globalpages 	= (int64 *) 0x201000;	// PTE de la mémoire publique
 	int16	*rampages 	= (int16 *) 0x400000;	// Table des enregistrements de pages RAM
 	int 	i;					// Itérateur
 
-	if (publicMem) { // Si c'est de la mémoire publique
+	if (mflags & MEM_PUBLIC) { // Si c'est de la mémoire publique
 		for (i = 0; i < pagesNb; i++)
 		{
 			globalpages [((virtAddr >> 12) & 0x3FFFF) + i] = 0;
-			rampages [((virtAddr >> 12) & 0x3FFFF) + i] = 0;
+			if (!(mflags & MEM_DONTFREEPHYSICAL))
+			{
+				rampages [((virtAddr >> 12) & 0x3FFFF) + i] = 0;
+			}
 		}
 	} else { // Si c'est de la mémoire privée
 	

@@ -120,6 +120,7 @@ int64 semaphore = 0;
 void Test () 
 {
 	int i;
+	int64 *teste;
 	
 	//Tester les fonctions OpenFile et ReadFile
 	FILE file;
@@ -131,6 +132,11 @@ void Test ()
 	ReadFile(&file, 0, 1, (void *) &mbuf);
 	
 	kprintf((char *) &mbuf, 0x0F);
+	
+	//On teste la mémoire privée
+	teste = (int64 *) VirtualAlloc(0, 1, 0, 1);
+	
+	kprintf("Reussi !!", 0x02);
 	
 	//On va tester les threads :D. Pour cela, créer 4 threads, qui vont exécuter le même code, mais avec une pile différente (et une variable globale pour la synchro)
 	asm("cli");

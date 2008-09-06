@@ -80,10 +80,11 @@ typedef struct {
 #define MEM_PRIVATE		0x00000080
 #define MEM_OUTPHYSICAL		0x00000100
 #define MEM_PHYSICALADDR	0x00000200
+#define MEM_DONTFREEPHYSICAL	0x00000400	//Indique qu'on ne libère que l'enregsitrement des pages virtuelle. La page physique reste allouée
 
 // Prototypes
 void 	*VirtualAlloc 		(int64 physicaladdr, unsigned int pagesNb, int mflags, int pid);
-void	VirtualFree		(int64 virtAddr, unsigned int pagesNb, char publicMem);
+void	VirtualFree		(int64 virtAddr, unsigned int pagesNb, int mflags);
 void 	memcopy			(char *dst, char *src, int n);
 void 	CreateSegment		(int index, int16 flags);
 void 	CreateSysSegment	(int index, int64 baseAddress, int16 limit, int16 flags);
