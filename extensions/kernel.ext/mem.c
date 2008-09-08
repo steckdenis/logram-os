@@ -153,7 +153,7 @@ void *VirtualAlloc (int64 physicaladdr, unsigned int pagesNb, int mflags, int pi
 				pdpe = (int64 *) VirtualAlloc((int64) &pdpef, 1, MEM_PUBLIC | MEM_OUTPHYSICAL, 1);	//Créer une nouvelle pdpe
 				*pdpe = 0;
 				zerofill((char *) pdpe, 4096);
-				plm4e[nplm4e] = (int64) pdpef;
+				plm4e[nplm4e] = pdpef + PAGE_PRESENT + PAGE_WRITE + PAGE_USER;
 			}
 			else
 			{
@@ -173,7 +173,7 @@ void *VirtualAlloc (int64 physicaladdr, unsigned int pagesNb, int mflags, int pi
 				{
 					pde = (int64 *) VirtualAlloc((int64) &pdef, 1, MEM_PUBLIC | MEM_OUTPHYSICAL, 1);	//Créer une nouvelle pdpe
 					zerofill((char *) pde, 4096);
-					pdpe[npdpe] = (int64) pdef;
+					pdpe[npdpe] = pdef + PAGE_PRESENT + PAGE_WRITE + PAGE_USER;
 				}
 				else
 				{
@@ -187,7 +187,7 @@ void *VirtualAlloc (int64 physicaladdr, unsigned int pagesNb, int mflags, int pi
 					{
 						pte = (int64 *) VirtualAlloc((int64) &ptef, 1, MEM_PUBLIC | MEM_OUTPHYSICAL, 1);	//Créer une nouvelle pdpe
 						zerofill((char *) pte, 4096);
-						pde[npde] = (int64) ptef;
+						pde[npde] = ptef + PAGE_PRESENT + PAGE_WRITE + PAGE_USER;
 					}
 					else
 					{

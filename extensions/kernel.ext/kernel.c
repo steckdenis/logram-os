@@ -135,7 +135,7 @@ void Test ()
 	
 	//On teste la mémoire privée
 	teste = (int64 *) VirtualAlloc(0, 1, 0, 1);
-	
+	teste = 36;
 	kprintf("Reussi !!", 0x02);
 	
 	//On va tester les threads :D. Pour cela, créer 4 threads, qui vont exécuter le même code, mais avec une pile différente (et une variable globale pour la synchro)
