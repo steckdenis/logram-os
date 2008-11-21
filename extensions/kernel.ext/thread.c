@@ -56,8 +56,8 @@ void ThreadInit()
 	pThread->tr = 48;	//+3 car en ring3, voir la doc ;-)
 	
 	//Passer à ce thread
-	short content = 48;
-	asm ("ltr (%0)" :: "a"(&content));
+	asm (	"mov $48, %ax\n"
+		"ltr %ax");
 	
 	//Sauter dedans
 	asm("int $32");
@@ -67,6 +67,7 @@ void ThreadInit()
 typedef struct
 {
 	int64	_rflags;
+	int64	es;
 	int64	ds;
 	int64	r15;
 	int64	r14;
@@ -104,16 +105,16 @@ void int_clock() {
 	gdtsysrec	tss;	//Segment de TSS
 
 	//Récupérer le stackframe
-	asm(	"mov %%rax, %0"
+	asm __volatile__ (	"mov %%rax, %0"
 	: "=m" (st));
-	
-	//Récupérer le registre TR courrant
-	asm(	"str %0"
-	: "=a" (tr));
 	
 	//On récupère aussi le cr0
 	asm(	"mov %%cr3, %0"
 	: "=a" (cr3));
+	
+	//Récupérer le registre TR courrant
+	asm(	"str %0"
+	: "=a" (tr));
 	
 	//On archive le tout dans le TSS courrant du thread. Il faut d'abord retrouver la base de cette TSS
 	prevThread = (TSS *) GetTSSBaseAddr(tr);
@@ -170,6 +171,7 @@ void int_clock() {
 	//On restaures les autres registres
 	st->ss = nextThread->ss;
 	st->ds = nextThread->ds;
+	st->es = nextThread->ds;
 	st->rsp = nextThread->rsp;
 	st->rflags = nextThread->rflags;
 	st->cs = nextThread->cs;

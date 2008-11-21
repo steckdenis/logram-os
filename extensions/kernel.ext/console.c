@@ -201,19 +201,28 @@ void EraseScreen () {
 // Paramètres : - char *str 	: chaîne à afficher
 //		- char style 	: couleur de la chaîne
 void kprintf(char *str, char style) {
-	volatile char *mBuf = screenbuf;
-	
-	while (*str) {
-		*mBuf = *str;
-		mBuf++;
-		*mBuf = style;
-		mBuf++;
-		str++;
-	}
-
-	screenbuf += 160;
-	ScrollScreen ();
-	ShowCursor ();
+        volatile char *mBuf = screenbuf;
+        
+        while (*str) {
+                if(*str == '\n')
+		{
+                        mBuf = screenbuf += 160;
+                        ScrollScreen();
+                }
+                else
+		{
+                        *mBuf = *str;
+                        mBuf++;
+                        *mBuf = style;
+                        mBuf++;
+                }
+ 
+                str++;
+        }
+ 
+        screenbuf += 160;
+        ScrollScreen ();
+        ShowCursor ();
 }
 
 void kprintf_unicode(lchar *str, char style)
@@ -223,11 +232,19 @@ void kprintf_unicode(lchar *str, char style)
 	
 	while (str[i]) 
 	{
-		*mBuf = (char) str[i];
-		mBuf++;
-		*mBuf = style;
-		mBuf++;
-		i++;
+		if((char) *str == '\n')
+		{
+                        mBuf = screenbuf += 160;
+                        ScrollScreen();
+                }
+		else
+		{
+			*mBuf = (char) str[i];
+			mBuf++;
+			*mBuf = style;
+			mBuf++;
+			i++;
+		}
 	}
 	
 	screenbuf += 160;

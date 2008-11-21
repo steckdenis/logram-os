@@ -96,11 +96,15 @@ extern firstThread
 		xor rax, rax
 		mov ax, ds
 		push rax
+		mov ax, es
+		push rax
 		pushfq
 %endmacro
 
 %macro POPALL	0
 		popfq
+		pop rax
+		mov es, ax
 		pop rax
 		mov ds, ax
 		pop r15

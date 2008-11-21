@@ -330,6 +330,11 @@ void ATA_ReadSector (int64 sector, void *buf) {
 	// Et lit les données
     	buffer = (int16 *) buf;
     	for (i = 0 ; i < 256 ; i++) buffer [i] = inw (port + ATA_DATA);
+    	port += ATA_DATA;
+    	
+    	/*asm("rep insw"
+    	:
+    	: "c" (256), "D" (buffer), "d" (port)); */
 }
 
 // Fonction qui permet la lecture d'un secteur sur les disques ATAPI
