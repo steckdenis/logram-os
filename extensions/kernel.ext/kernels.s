@@ -35,7 +35,6 @@ LoadGDT:
 	; Sélectionne le segment de données pour ds
 	mov ax, 0x18
 	mov ds, ax
-	mov es, ax
 	ret
 
 section .data
