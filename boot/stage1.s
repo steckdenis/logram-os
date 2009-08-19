@@ -2,7 +2,7 @@
 ; stage1.s
 ; This file is part of Logram
 ;
-; Copyright (C) 2008 - Bruno Régaldo
+; Copyright (C) 2008 - royalbru
 ;		     - Denis Steckelmacher
 ;
 ; Logram is free software; you can redistribute it and/or modify

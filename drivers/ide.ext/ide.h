@@ -2,7 +2,7 @@
  * ide.h
  * This file is part of Logram
  *
- * Copyright (C) 2008 - Bruno Régaldo
+ * Copyright (C) 2008 - royalbru
  *
  * Logram is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
